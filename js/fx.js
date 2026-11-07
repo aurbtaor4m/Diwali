@@ -99,14 +99,23 @@
 
   // Pixel-art glow: a few concentric discs, each faint. They overlap so the
   // centre is brightest, giving visible "bands" — a classic retro look.
-  function glow(ctx, cx, cy, r, col, a = 0.5, steps = 4) {
+  //
+  // add = true uses the 'lighter' blend mode: colours are ADDED to what's
+  // underneath, like real light. Without it, a faint gold glow over dark navy
+  // just mixes into a muddy brown; with it, it brightens into a warm halo.
+  function glow(ctx, cx, cy, r, col, a = 0.5, steps = 4, add = false) {
     const base = ctx.globalAlpha;
+    const op = ctx.globalCompositeOperation;
+    if (add) ctx.globalCompositeOperation = 'lighter';
     for (let k = steps; k >= 1; k--) {
       ctx.globalAlpha = base * a / steps;
       disc(ctx, cx, cy, (r * k) / steps, col);
     }
     ctx.globalAlpha = base;
+    ctx.globalCompositeOperation = op;
   }
+  // light(): shorthand for an additive glow — use for anything that EMITS light.
+  const light = (ctx, cx, cy, r, col, a = 0.5, steps = 4) => glow(ctx, cx, cy, r, col, a, steps, true);
 
   // Full-screen colour wash (white flash, fade to black...).
   function flash(ctx, a, col = '#f4f4f4') {
@@ -426,7 +435,7 @@
     W, H,
     clamp, lerp, ease, easeOut, easeIn, easeOutBack, seg,
     mulberry32, hash, hrange,
-    px, line, disc, glow, flash, bands,
+    px, line, disc, glow, light, flash, bands,
     shake, shakeFrame, emit, burst, firework, anaar, fireWall, lightning, speedLines, stars,
   };
 })(window);

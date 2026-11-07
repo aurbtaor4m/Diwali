@@ -139,6 +139,134 @@
       '.............kuuuuuk......kuuuuuk...............',
       '.............kkkkkkk......kkkkkkk...............',
     ] },
+
+    // -------------------------------------------------------------------------
+    // RAMA — walking frame. Same as rama_stand down to the knees; the legs are
+    // in mid-stride. The walk cycle alternates rama_stand ↔ rama_step.
+    // -------------------------------------------------------------------------
+    rama_step: { f: [
+      '................................',
+      '................................',
+      '................................',
+      '..............k.................',
+      '.............kyk................',
+      '.............kqk................',
+      '............kyqGk...............',
+      '...........kyqqqGk..............',
+      '..........kyqqqqqGk.............',
+      '.........kyqqqirqqGk............',
+      '.........kyqqqrrqqGk......kyk...',
+      '.........kyqyqqqyqGk......ukyk..',
+      '.........kyqqqqqqqGk......u.kyk.',
+      '...w.w...kGqyqqqyqGk......u.kqk.',
+      '..wswsw.knenBBBBrBBBk.....u.kqk.',
+      '...khkh.kenNBkkBBkkBk.....u.kqk.',
+      '...kqqqqknkNBwkBBwkBk.....u.kqk.',
+      '...khhhukenNBBBBBBBBBk....u.kqk.',
+      '...khhhuknqNBBBBNNBBk.....u.kqk.',
+      '...khhhukenNNBBBBBBk......u.kqk.',
+      '....khhukneekNNBBk........u..kqk',
+      '.....kNBenBqBBBBqBBhNk....u..kqk',
+      '.....kNBBBBBqBBqBBhBBNk...u..kqk',
+      '.....kNBBBBBByqBBhBBBNk...u..kqk',
+      '.....kNBkNBBBrBBhBkqyqk...u..kqk',
+      '.....kNBkNBBBBBhBBkNBBk...u..kqk',
+      '.....kNBkNBBBBhBBBkNBBBk..u..kqk',
+      '.....kNBkNBBBhBBBBkNBBkkkkkkkkqk',
+      '.....kNBkNBBhBBBBBkNBBBqBBBBBBrk',
+      '.....kNBkNBhBBBBBBkkNNNqNNNNNNrk',
+      '.....kqqkNhBBBBBBNk.kkkkkkkkkkrk',
+      '.....kNBkkFFFFFFFFk.......u..krk',
+      '.....kNNkkFqFFFqFFk.......u..kqk',
+      '......kkkyyyFqFyyyqk......u..kqk',
+      '.......kyyqyFqFyyyqqk.....u..kqk',
+      '.......kyyqyFqFyyqyqk.....u..kqk',
+      '......kyyyqyFqFyyyqyqk....u..kqk',
+      '......kyyyqyFqFyyyqyqk....u.kqk.',
+      '......kyyyqyyFyyyyqyqk....u.kqk.',
+      '......kyyyqyyGyyyyqyqk....u.kqk.',
+      '......kyyyqyqkkqyyyqqk....u.kqk.',
+      '.....kyyyqyk...kyyyqyqk...u.kqk.', // stride: back foot lifts, front foot forward
+      '....kyyqyqk.....kyyyqqk...u.kqk.',
+      '....kqyqqk.......kyqyqk...u.kqk.',
+      '....kGGGk........kGGGk....u.kyk.',
+      '....kBBNk........kBBNk....ukyk..',
+      '...kBBBk.........kBBBBNk..kyk...',
+      '...kkkk..........kkkkkkk...k....',
+    ] },
+
+    // -------------------------------------------------------------------------
+    // RAMA — drawing the bow (scene 2b close-up). Reference: rama_bow_closeup.png
+    // Head, dhoti and legs are identical to rama_stand. The arms are horizontal:
+    // the back hand is pulled to his chin, the front arm locks the bow out.
+    // The bow is bent further than when standing because it's under tension.
+    // NOTE: the bowSTRING and the arrow are NOT in this grid. scenes.js draws
+    // them as lines between these points, so they can crackle with
+    // electricity and snap straight on release:
+    //   top tip (26,4)   bottom tip (26,38)   hand / nock point (16,20)
+    // -------------------------------------------------------------------------
+    rama_draw: { f: [
+      '................................',
+      '................................',
+      '................................',
+      '..............k.................',
+      '.............kyk.........kyk....',
+      '.............kqk..........kyk...',
+      '............kyqGk..........kyk..',
+      '...........kyqqqGk..........kyk.',
+      '..........kyqqqqqGk.........kqk.',
+      '.........kyqqqirqqGk.........kqk',
+      '.........kyqqqrrqqGk.........kqk',
+      '.........kyqyqqqyqGk.........kyk',
+      '.........kyqqqqqqqGk.........kyk',
+      '...w.w...kGqyqqqyqGk.........kyk',
+      '..wswsw.knenBBBBrBBBk........kyk',
+      '...khkh.kenNBkkBBkkBk........kqk',
+      '...kqqqqknkNBwkBBwkBk........kqk',
+      '...khhhukenNBBBBBBBBBk.......kqk',
+      '...khhhuknqNBBBBNNBBk........kqk',
+      '...khhhukenNNBBBBBBk.........kqk',
+      '....khhukneekNNBBk...........krk',
+      '..kkkkkkkkkkkkkkkBkkkkkkkkkkBBrk',
+      '..kNBBBBBBBqBBBBkBBBqBBBBBBBBBrk',
+      '..kNNNNNNNNNNNNNkhNNNNNNNNNNNNrk',
+      '...kkkkkkkkkkkkkhBkkkkkkkkkkkkrk',
+      '........kNBBBBBhBBk..........krk',
+      '........kNBBBBhBBBk..........kqk',
+      '........kNBBBhBBBBk..........kqk',
+      '........kNBBhBBBBBk..........kqk',
+      '........kNBhBBBBBBk..........kqk',
+      '........kNhBBBBBBNk..........kqk',
+      '........kkFFFFFFFFk..........kqk',
+      '........kkFqFFFqFFk..........kqk',
+      '......kkkyyyFqFyyyqk.........kqk',
+      '.......kyyqyFqFyyyqqk.......kqk.',
+      '.......kyyqyFqFyyqyqk.......kyk.',
+      '......kyyyqyFqFyyyqyqk.....kyk..',
+      '......kyyyqyFqFyyyqyqk....kyk...',
+      '......kyyyqyyFyyyyqyqk...kyk....',
+      '......kyyyqyyGyyyyqyqk..........',
+      '......kyyyqyqkkqyyyqqk..........',
+      '......kyyyqyk.kyyyqyqk..........',
+      '......kyyqyqk.kyyyqqk...........',
+      '......kqyqqk...kyqyqk...........',
+      '.......kGGGk...kGGGk............',
+      '.......kBBNk...kBBNk............',
+      '......kBBBNk...kBBBBNk..........',
+      '......kkkkkk...kkkkkkk..........',
+    ] },
+
+    // -------------------------------------------------------------------------
+    // ARROW — 16 × 5, flies to the right. Red and white fletching, wooden
+    // shaft, steel head. Reference: props/arrow.png (turned horizontal).
+    // -------------------------------------------------------------------------
+    arrow: { f: [
+      '.rw.........k...',
+      'rwwk........ksk.',
+      'kkhhhhhhhhhhhssw',
+      'rwwk........ksk.',
+      '.rw.........k...',
+    ] },
   };
 
   // Named colour swaps: reuse one drawing with different colours.
@@ -235,8 +363,16 @@
     return pointCache[key].map(([px, py]) => ({ x: Math.round(x) + px * sx, y: Math.round(y) + py * sy }));
   }
 
+  // Convert ONE sprite pixel (px, py) to screen coordinates, for a sprite
+  // drawn with draw(ctx, name, x, y, {sx, sy}). Used to attach effects to a
+  // specific spot, e.g. the bowstring to the bow's tips.
+  function at(name, px, py, x, y, sx = 1, sy = 1) {
+    const c = get(name);
+    return { x: Math.round(x) + (px + 0.5 - c.width / 2) * sx, y: Math.round(y) + (py + 0.5 - c.height) * sy };
+  }
+
   function size(name) { const c = get(name); return { w: c.width, h: c.height }; }
   function names() { return Object.keys(S).concat(Object.keys(VARIANTS)); }
 
-  root.Sprites = { get, draw, points, size, names, raw: S };
+  root.Sprites = { get, draw, points, at, size, names, raw: S };
 })(window);

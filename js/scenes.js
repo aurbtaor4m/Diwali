@@ -56,7 +56,7 @@
   function torch(ctx, x, y, t, i) {
     const f = Math.floor(t * 12);               // flame changes 12×/s
     const h1 = hash(f, i, 1) < 0.5 ? 1 : 0;
-    FX.glow(ctx, x, y - 2, 7 + h1 * 2, PAL.o, 0.35, 3);
+    FX.light(ctx, x, y - 2, 7 + h1 * 2, PAL.o, 0.35, 3);
     rect(ctx, x - 1, y - 2, 3, 2, PAL.r);
     rect(ctx, x, y - 3 - h1, 1, 2 + h1, PAL.o);
     rect(ctx, x, y - 1, 1, 1, PAL.y);
@@ -208,7 +208,7 @@
     if (eyeOn > 0 && sx !== 0) {
       const pulse = 0.75 + 0.25 * Math.sin(t * 9);
       for (const e of Sprites.points('ravana', 'E', X, y, sx, sy)) {
-        FX.glow(ctx, e.x, e.y, 5, PAL.E, 0.55 * eyeOn * pulse, 3);
+        FX.light(ctx, e.x, e.y, 5, PAL.E, 0.55 * eyeOn * pulse, 3);
         FX.px(ctx, e.x - 1, e.y - 1, PAL.w, 2);
       }
     }
@@ -228,6 +228,189 @@
   }
 
   // ===========================================================================
+  // SCENE 2 — RAMA (4–12 s), three cuts:
+  //   A 0.0–2.4  Rama strides in from the left over anime speed lines (2×)
+  //   B 2.4–5.4  close-up (3×): he draws the bow, blue lightning crackles
+  //              along the string
+  //   C 5.4–8.0  release, then a tracking shot of the arrow flying with a
+  //              golden sparkler trail and afterimages (motion blur)
+  // ===========================================================================
+  const CUT_B = 2.4, CUT_C = 5.4;
+
+  function sceneRama(ctx, p) {
+    const t = p * 8;
+    if (t < CUT_B) ramaWalkIn(ctx, t);
+    else if (t < CUT_C) ramaDraw(ctx, t - CUT_B);
+    else ramaRelease(ctx, t - CUT_C);
+  }
+
+  // --- Cut A: the hero walks in ------------------------------------------------
+  function ramaWalkIn(ctx, t) {
+    const S = 2, GROUND = 222;
+    // background: blue with a bright core, radial speed lines pointing at Rama
+    rect(ctx, 0, 0, W, H, PAL.n);
+    FX.glow(ctx, 240, 150, 170, PAL.b, 0.9, 5);
+    FX.glow(ctx, 240, 150, 60, PAL.c, 0.5, 3);
+    FX.speedLines(ctx, t, 240, 150, { n: 90, rIn: 95, cols: [PAL.w, PAL.a, PAL.c], alpha: 0.75 });
+
+    // position: eases from off-screen left to the centre, arriving at 1.5 s
+    const k = seg(t, 0, 1.5);
+    const x = lerp(-40, 232, easeOut(k));
+    const moving = k < 1;
+    // walk cycle: swap legs every 0.14 s while moving; step frames bob 1 art px
+    const stepFrame = moving && Math.floor(t / 0.14) % 2 === 1;
+    const y = GROUND - (stepFrame ? S : 0);
+
+    // ground shadow
+    ctx.save(); ctx.globalAlpha = 0.45;
+    rect(ctx, x - 24, GROUND - 2, 48, 4, PAL.D);
+    ctx.restore();
+    // dust kicked up at his heels while walking
+    FX.emit(ctx, t, {
+      x: (b) => lerp(-40, 232, easeOut(seg(b, 0, 1.5))) - 10, y: GROUND - 2, t1: 1.4, rate: 18, life: 0.5,
+      vx: [-40, -10], vy: [-30, -8], g: 60, cols: [PAL.s, PAL.w, PAL.d], size: [1, 2], seed: 41,
+    });
+    Sprites.draw(ctx, stepFrame ? 'rama_step' : 'rama_stand', x, y, { s: S });
+
+    // once he stops: a glint runs up the crown, then a 4-point star twinkles
+    if (t > 1.6) {
+      const g = seg(t, 1.6, 2.0);
+      const top = Sprites.at('rama_stand', 14, 4, x, y, S, S);
+      const s = Math.round(Math.sin(g * Math.PI) * 6);
+      if (s > 0) {
+        FX.line(ctx, top.x - s, top.y, top.x + s, top.y, PAL.w);
+        FX.line(ctx, top.x, top.y - s, top.x, top.y + s, PAL.w);
+        FX.glow(ctx, top.x, top.y, 6, PAL.y, 0.6, 2);
+      }
+    }
+  }
+
+  // Screen positions of the bowstring's three points for rama_draw.
+  function bowPoints(X, Y, S) {
+    return {
+      top: Sprites.at('rama_draw', 26, 4, X, Y, S, S),
+      bot: Sprites.at('rama_draw', 26, 38, X, Y, S, S),
+      nock: Sprites.at('rama_draw', 16, 20, X, Y, S, S),
+    };
+  }
+
+  // --- Cut B: close-up, drawing the bow --------------------------------------
+  function ramaDraw(ctx, u) {
+    const S = 3, X = 196, Y = 262;
+    const power = seg(u, 0.4, 2.6);               // charge builds up 0 → 1
+    // dark backdrop; slow, dim speed lines; a blue aura that grows with power
+    rect(ctx, 0, 0, W, H, PAL.D);
+    FX.speedLines(ctx, u * 0.5, X + 40, 150, { n: 60, rIn: 120, cols: [PAL.n, PAL.b], alpha: 0.6 });
+    FX.glow(ctx, X + 30, 160, 60 + power * 70, PAL.b, 0.35 + power * 0.3, 5);
+
+    // the bow trembles by one pixel as tension peaks
+    const tr = power > 0.7 ? (hash(Math.floor(u * 30), 7) < 0.5 ? -1 : 1) : 0;
+    Sprites.draw(ctx, 'rama_draw', X + tr, Y, { s: S });
+    const bp = bowPoints(X + tr, Y, S);
+
+    // the string: two straight segments from the bow tips to his hand
+    FX.line(ctx, bp.top.x, bp.top.y, bp.nock.x, bp.nock.y, PAL.w, 1);
+    FX.line(ctx, bp.bot.x, bp.bot.y, bp.nock.x, bp.nock.y, PAL.w, 1);
+    // the nocked arrow, held at the string
+    Sprites.draw(ctx, 'arrow', bp.nock.x - 4, bp.nock.y - 7, { s: S, anchor: 'tl' });
+
+    // electric arcs crackling along the string — reseeded every 2 frames
+    if (power > 0) {
+      const seed = Math.floor(u * 15);
+      const amp = 3 + power * 7;
+      ctx.save(); ctx.globalAlpha = clamp(power * 2);
+      FX.lightning(ctx, bp.top.x, bp.top.y, bp.nock.x, bp.nock.y, seed, { amp });
+      FX.lightning(ctx, bp.nock.x, bp.nock.y, bp.bot.x, bp.bot.y, seed + 99, { amp });
+      // stray arcs leaping off the bow limbs
+      if (power > 0.4) {
+        for (let i = 0; i < 2; i++) {
+          const from = i ? bp.top : bp.bot;
+          const ang = hash(seed, i, 5) * Math.PI * 2;
+          const len = 14 + hash(seed, i, 6) * 18 * power;
+          FX.lightning(ctx, from.x, from.y, from.x + Math.cos(ang) * len, from.y + Math.sin(ang) * len, seed + i * 7, { amp: 5, depth: 3 });
+        }
+      }
+      ctx.restore();
+      // blue sparks drifting off the string
+      FX.emit(ctx, u, {
+        x: (b) => lerp(bp.top.x, bp.nock.x, hash(Math.floor(b * 60), 3)), y: (b) => lerp(bp.top.y, bp.bot.y, hash(Math.floor(b * 60), 4)),
+        t0: 0.6, rate: 40 * power + 5, life: 0.5, vx: [-30, 30], vy: [-40, 10], g: 40,
+        cols: [PAL.a, PAL.c, PAL.w], seed: 51, kind: 'spark',
+      });
+      // the arrowhead gathers light
+      const tip = { x: bp.nock.x - 4 + 15 * S, y: bp.nock.y };
+      FX.light(ctx, tip.x, tip.y, 6 + power * 10, PAL.a, 0.6 * power, 3);
+      if (power > 0.9) FX.px(ctx, tip.x - 1, tip.y - 1, PAL.w, 3);
+    }
+    // a white flash right at the end bridges into the release cut
+    FX.flash(ctx, seg(u, 2.85, 3.0) * 0.9, PAL.w);
+  }
+
+  // --- Cut C: release + the arrow in flight ----------------------------------
+  function ramaRelease(ctx, v) {
+    const REL = 0.4; // seconds of the release moment before the tracking shot
+    if (v < REL) {
+      // same close-up framing as cut B, string snaps back and vibrates
+      const S = 3, X = 196, Y = 262;
+      rect(ctx, 0, 0, W, H, PAL.D);
+      FX.speedLines(ctx, v + 3, X + 40, 150, { n: 80, rIn: 70, cols: [PAL.c, PAL.a, PAL.w], alpha: 0.7 });
+      Sprites.draw(ctx, 'rama_draw', X, Y, { s: S });
+      const bp = bowPoints(X, Y, S);
+      // string now straight between the tips, wobbling with decaying amplitude
+      const wob = Math.round(Math.sin(v * 90) * 5 * (1 - v / REL));
+      const midX = bp.top.x + wob, midY = (bp.top.y + bp.bot.y) / 2;
+      FX.line(ctx, bp.top.x, bp.top.y, midX, midY, PAL.w, 1);
+      FX.line(ctx, midX, midY, bp.bot.x, bp.bot.y, PAL.w, 1);
+      // the arrow leaves at high speed with afterimages and sparks
+      const ax = bp.nock.x - 4 + v * 1500, ay = bp.nock.y - 7;
+      for (let j = 3; j >= 1; j--) Sprites.draw(ctx, 'arrow', ax - j * 30, ay, { s: S, anchor: 'tl', mode: 'w', alpha: 0.35 / j });
+      Sprites.draw(ctx, 'arrow', ax, ay, { s: S, anchor: 'tl' });
+      FX.burst(ctx, v, { x: bp.nock.x + 40, y: bp.nock.y, n: 26, power: 200, g: 60, life: 0.4, cols: [PAL.y, PAL.w, PAL.q], seed: 61, trail: 3 });
+      FX.flash(ctx, (1 - v / 0.1) * 0.9, PAL.w); // continues the white flash from cut B
+      FX.shakeFrame(ctx, FX.shake(v, 0, 0.3, 4, 3));
+      return;
+    }
+
+    // ---- tracking shot: the camera flies alongside the arrow
+    const w = v - REL;                 // 0 → 2.2
+    const S = 4;
+    rect(ctx, 0, 0, W, H, PAL.D);
+    dither(ctx, 180, 188, PAL.n);
+    rect(ctx, 0, 188, W, H - 188, PAL.n);
+    // background streaks rush left — that's what sells the speed
+    for (let i = 0; i < 70; i++) {
+      const y = Math.floor(hash(i, 70, 1) * H);
+      const speed = 500 + hash(i, 70, 2) * 900;
+      const len = 10 + Math.floor(hash(i, 70, 3) * 50);
+      const x = W - ((hash(i, 70, 4) * (W + 200) + w * speed) % (W + 200)) + 50;
+      rect(ctx, x, y, len, 1, i % 4 === 0 ? PAL.c : i % 3 === 0 ? PAL.s : PAL.b);
+    }
+
+    // arrow position: drifts right slowly, then rockets off-screen at the end
+    const out = seg(w, 1.95, 2.2);
+    const ax = lerp(120, 250, ease(seg(w, 0, 1.9))) + easeIn(out) * 320;
+    const ay = 128 + Math.round(Math.sin(w * 6) * 2);
+    const tail = { x: ax, y: ay + 2 * S + 2 };     // fletching end of the arrow
+    const head = { x: ax + 16 * S, y: tail.y };
+
+    // golden phuljhadi (sparkler) trail streaming back from the tail.
+    // The arrow barely moves on screen, so the sparks get a big leftward
+    // velocity — the world is rushing past.
+    FX.emit(ctx, w, {
+      x: tail.x + 4, y: tail.y, spread: 4, t0: -0.6, rate: 220, life: 0.55,
+      vx: [-420, -160], vy: [-70, 70], g: 140, kind: 'spark',
+      cols: [PAL.w, PAL.y, PAL.y, PAL.q, PAL.o], seed: 71, flicker: 0.2,
+    });
+    // afterimages — fading white copies left behind = motion blur
+    for (let j = 4; j >= 1; j--) Sprites.draw(ctx, 'arrow', ax - j * 18, ay, { s: S, anchor: 'tl', mode: 'w', alpha: 0.28 / j });
+    FX.light(ctx, tail.x + 4, tail.y, 9, PAL.o, 1.2, 3);
+    Sprites.draw(ctx, 'arrow', ax, ay, { s: S, anchor: 'tl' });
+    // hot white point at the arrowhead
+    FX.light(ctx, head.x, head.y, 7, PAL.y, 1.3, 3);
+    FX.px(ctx, head.x - 1, head.y - 1, PAL.w, 3);
+  }
+
+  // ===========================================================================
   // Placeholders for scenes not built yet (replaced one at a time).
   // ===========================================================================
   function placeholder(title, sub, bg, fg) {
@@ -242,8 +425,7 @@
 
   const SCENES = [
     { name: 'RAVANA', dur: 4, xfade: 0, draw: sceneRavana },
-    { name: 'RAMA', dur: 8, xfade: 0.2,
-      draw: placeholder('2 RAMA', 'THE BOW IS DRAWN', [PAL.n, PAL.b], PAL.c) },
+    { name: 'RAMA', dur: 8, xfade: 0.2, draw: sceneRama },
     { name: 'VICTORY', dur: 5, xfade: 0,
       draw: placeholder('3 VICTORY', 'FIRE AND FIREWORKS', [PAL.m, PAL.r], PAL.y) },
     { name: 'SITA', dur: 5, xfade: 0.3,
