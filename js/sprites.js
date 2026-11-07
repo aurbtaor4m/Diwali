@@ -385,6 +385,65 @@
       '.khh',
       '..kk',
     ] },
+
+    // -------------------------------------------------------------------------
+    // SITA — in prayer, hands folded (namaste). 32 × 48, HALF sprite (16 cols
+    // mirrored), since the pose faces the viewer and is symmetric.
+    // Reference: sita_prayer.png — gold crown with ruby, black hair with a
+    // centre parting, bindi, gold earrings, green blouse, red saree with gold
+    // dots and a gold + green border.
+    //   f/x skin   e/k hair   g blouse   r/m saree + pleats   q/y/G gold
+    // -------------------------------------------------------------------------
+    sita_pray: { h: [
+      '................',
+      '................',
+      '................',
+      '...............k',
+      '..............ky',
+      '.............kyq',
+      '............kyqr',
+      '...........kyqqq',
+      '..........kGqyqq',
+      '.........kGqqrqq',
+      '........kkkeeeek',
+      '.......keekfffff',
+      '.......keekffffr',
+      '.......keekfxxff',
+      '.......keekfkkff',
+      '.......kqekffffx',
+      '.......kyekffffr',
+      '.......keekkfffx',
+      '.......keeeeekxf',
+      '......keeekkkkgq',
+      '......kekgggggqy',
+      '......kekgggggqr',
+      '......kekggggkkf',
+      '......kekfgggkff',
+      '......kekffggkfx',
+      '......kekffgkffx',
+      '......kekfkqyqfx',
+      '......keekfkgqqk',
+      '......keekkggrrr',
+      '......keekkqyqqy',
+      '.......kk.krrrmr',
+      '.........krrrmrr',
+      '.........kryrmrr',
+      '.........krrrmrr',
+      '........krrrrmry',
+      '........kryrrmrr',
+      '........krrrrmrr',
+      '........krrryrmr',
+      '.......krrrrrmrr',
+      '.......kryrrrmrr',
+      '.......krrrrrmrr',
+      '.......kqqqqqqqq',
+      '.......kgggggggg',
+      '.......kkkkkkkkk',
+      '.........kxffk..',
+      '........kfffffk.',
+      '........kkkkkkk.',
+      '................',
+    ] },
   };
 
   // Named colour swaps: reuse one drawing with different colours.

@@ -513,6 +513,143 @@
   }
 
   // ===========================================================================
+  // SCENE 4 — SITA (17–22 s)
+  //   0.0–0.9  the last of the fire rises into waves of gold that fill the screen
+  //   0.5–1.3  Sita appears: white silhouette → full colour, soft glow
+  //   1.0–4.2  a rangoli draws itself on the floor around her, petal by petal
+  // ===========================================================================
+
+  // One rangoli petal, drawn pixel by pixel so it stays crisp at ANY angle.
+  // For every pixel in the petal's bounding box we ask: "in the petal's own
+  // coordinates (along = distance out from the centre, across = sideways),
+  // am I inside the teardrop?"  This is called inverse mapping.
+  //   k      : 0..1 growth (petals 'pop' in)
+  //   squash : vertical squash, because the rangoli lies flat on the floor
+  function petal(ctx, cx, cy, ang, r0, r1, w, col, core, k, squash) {
+    if (k <= 0) return;
+    const len = (r1 - r0) * k, ww = w * k;
+    const ca = Math.cos(ang), sa = Math.sin(ang);
+    // bounding box of the petal on screen
+    const ex = Math.abs(ca) * (r0 + len) + Math.abs(sa) * ww + 2;
+    const ey = (Math.abs(sa) * (r0 + len) + Math.abs(ca) * ww) * squash + 2;
+    for (let y = Math.floor(cy - ey); y <= cy + ey; y++) {
+      for (let x = Math.floor(cx - ex); x <= cx + ex; x++) {
+        const dx = x + 0.5 - cx, dy = (y + 0.5 - cy) / squash;
+        const along = dx * ca + dy * sa - r0;
+        const across = -dx * sa + dy * ca;
+        if (along < 0 || along > len) continue;
+        const s = along / len;                                // 0 at base → 1 at tip
+        const half = ww * Math.pow(Math.sin(Math.PI * Math.pow(s, 0.75)), 0.8);
+        if (Math.abs(across) > half) continue;
+        ctx.fillStyle = (Math.abs(across) < half * 0.45 && s > 0.15 && s < 0.8) ? core : col;
+        ctx.fillRect(x, y, 1, 1);
+      }
+    }
+  }
+
+  // The rangoli design as data: each ring = [count, r0, r1, width, colour,
+  // core colour, angle offset]. Petals appear in this order, inner ring first.
+  const RANGOLI = [
+    [8, 10, 46, 12, PAL.r, PAL.y, 0],
+    [8, 26, 66, 13, PAL.F, PAL.w, Math.PI / 8],
+    [16, 64, 92, 7, PAL.g, PAL.l, 0],
+    [16, 70, 96, 5, PAL.z, PAL.i, Math.PI / 16],
+  ];
+  const RANGOLI_T0 = 1.0, PETAL_GAP = 0.05;
+
+  function drawRangoli(ctx, t, cx, cy) {
+    const SQ = 0.5;   // flattened: it lies on the floor
+    const RS = 0.92;  // overall size, so the outer ring stays on screen
+    // list every petal with its appear time (inner rings first)
+    const petals = [];
+    let n = 0;
+    RANGOLI.forEach(([count, r0, r1, w, col, core, off], ring) => {
+      for (let i = 0; i < count; i++) petals.push({ ring, ang: off + (i / count) * Math.PI * 2, r0: r0 * RS, r1: r1 * RS, w: w * RS, col, core, t0: RANGOLI_T0 + (n++) * PETAL_GAP });
+    });
+    const tEnd = RANGOLI_T0 + n * PETAL_GAP;
+    // outer ring of white dots and an orange border circle come in last
+    const kRing = easeOut(seg(t, tEnd, tEnd + 0.5));
+    if (kRing > 0) {
+      for (let a = 0; a < Math.PI * 2 * kRing; a += 0.012) {
+        FX.px(ctx, cx + Math.cos(a) * 112 * RS, cy + Math.sin(a) * 112 * RS * SQ, PAL.F, 2);
+      }
+      for (let i = 0; i < 32 * kRing; i++) {
+        const a = (i / 32) * Math.PI * 2;
+        FX.disc(ctx, cx + Math.cos(a) * 104 * RS, cy + Math.sin(a) * 104 * RS * SQ, 1.5, i % 2 ? PAL.w : PAL.c);
+      }
+    }
+    // draw outer rings first so inner petals sit on top
+    for (let ring = RANGOLI.length - 1; ring >= 0; ring--) {
+      for (const P of petals) {
+        if (P.ring !== ring) continue;
+        const k = FX.easeOutBack(seg(t, P.t0, P.t0 + 0.25)); // overshoot = 'pop'
+        petal(ctx, cx, cy, P.ang, P.r0, P.r1, P.w, P.col, P.core, Math.min(1.15, k), SQ);
+      }
+    }
+    // the centre: a white flower that appears first
+    const kc = FX.easeOutBack(seg(t, RANGOLI_T0 - 0.2, RANGOLI_T0 + 0.1));
+    if (kc > 0) { FX.disc(ctx, cx, cy, 9 * kc, PAL.w); FX.disc(ctx, cx, cy, 4 * kc, PAL.q); }
+    // a sparkle flies to each petal as it appears — the "drawing" hand
+    for (const P of petals) {
+      const a = t - P.t0;
+      if (a < 0 || a > 0.15) continue;
+      const tipR = P.r1;
+      FX.light(ctx, cx + Math.cos(P.ang) * tipR, cy + Math.sin(P.ang) * tipR * SQ, 6, PAL.w, 0.9, 2);
+    }
+  }
+
+  function sceneSita(ctx, p) {
+    const t = p * 5;
+    const X = 240, FEET = 214, S = 3;
+
+    // --- background: dark night, then gold waves rise up and fill it
+    rect(ctx, 0, 0, W, H, PAL.D);
+    const goldRise = easeOut(seg(t, 0, 0.9));
+    FX.fireWall(ctx, t, W + 200, {
+      scale: 0.3 + goldRise * 2.2,
+      layers: [
+        { col: PAL.G, h: 140, amp: 14, freq: 0.04, speed: 3, phase: 0 },
+        { col: PAL.q, h: 110, amp: 12, freq: 0.05, speed: 3.5, phase: 2 },
+        { col: PAL.y, h: 60, amp: 10, freq: 0.07, speed: 4, phase: 4 },
+      ],
+    });
+    // once filled: a calm gold room — wall, a dithered edge, and the floor
+    const settle = seg(t, 0.7, 1.1);
+    if (settle > 0) {
+      ctx.save(); ctx.globalAlpha = settle;
+      rect(ctx, 0, 0, W, 150, PAL.q);
+      dither(ctx, 150, 156, PAL.G);
+      rect(ctx, 0, 156, W, H - 156, PAL.G);
+      ctx.restore();
+    }
+    // soft breathing glow behind her
+    const glowK = seg(t, 0.4, 1.2);
+    FX.light(ctx, X, 120, 110, PAL.y, 0.5 * glowK, 5);
+    FX.light(ctx, X, 120, 60, PAL.w, (0.25 + 0.05 * Math.sin(t * 3)) * glowK, 3);
+
+    // --- rangoli on the floor around her feet
+    drawRangoli(ctx, t, X, FEET + 2);
+
+    // --- Sita: white silhouette fades in, then her colours appear
+    const kIn = seg(t, 0.5, 0.9), kCol = seg(t, 0.9, 1.3);
+    const bob = t > 1.3 && Math.sin(t * 2.5) > 0.4 ? 1 : 0;     // gentle breathing
+    if (kIn > 0) {
+      if (kCol > 0) Sprites.draw(ctx, 'sita_pray', X, FEET - bob, { s: S, alpha: kCol });
+      if (kCol < 1) Sprites.draw(ctx, 'sita_pray', X, FEET - bob, { s: S, mode: 'w', alpha: kIn * (1 - kCol) });
+    }
+
+    // --- marigold petals drifting down, and golden motes rising
+    FX.emit(ctx, t, {
+      x: W / 2, y: -6, spreadX: W, rate: 14, life: 4, t0: 0.8,
+      vx: [-12, 12], vy: [28, 45], cols: [PAL.F, PAL.o, PAL.y], size: [2, 2], fade: false, seed: 401,
+    });
+    FX.emit(ctx, t, {
+      x: X, y: 200, spreadX: 200, spreadY: 40, rate: 20, life: 2, t0: 0.6,
+      vx: [-6, 6], vy: [-30, -12], cols: [PAL.w, PAL.y], size: [1, 1], flicker: 0.3, seed: 402,
+    });
+  }
+
+  // ===========================================================================
   // SCENE 7 — TEMPLE + TITLE (31–37 s)
   //   0.00–1.25  camera glides forward through a pillared corridor and out
   //   1.30–2.40  "HAPPY DIWALI" types in, letter by letter, with a gold glow
@@ -703,8 +840,7 @@
     { name: 'RAVANA', dur: 4, xfade: 0, draw: sceneRavana },
     { name: 'RAMA', dur: 8, xfade: 0.2, draw: sceneRama },
     { name: 'VICTORY', dur: 5, xfade: 0, draw: sceneVictory },
-    { name: 'SITA', dur: 5, xfade: 0.3,
-      draw: placeholder('4 SITA', 'RANGOLI OF LIGHT', [PAL.G, PAL.q], PAL.w) },
+    { name: 'SITA', dur: 5, xfade: 0.3, draw: sceneSita },
     { name: 'AYODHYA', dur: 5, xfade: 0.3,
       draw: placeholder('5 AYODHYA', 'THE RETURN HOME', [PAL.D, PAL.n], PAL.y) },
     { name: 'COURT', dur: 4, xfade: 0.2,
