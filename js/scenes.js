@@ -650,6 +650,132 @@
   }
 
   // ===========================================================================
+  // SCENE 5 — RETURN TO AYODHYA (22–27 s)
+  // Night sky with stars and moon. The Pushpak Viman glides across, carrying
+  // Rama and Sita home. Below, the Ayodhya skyline: rows of diyas light up
+  // one by one from left to right, and their reflections shimmer in the river.
+  // ===========================================================================
+  const BANK = 204;      // y of the riverbank (top of the water)
+
+  // The skyline, described once as data: [x, width, height, roof]
+  //   roof: 'f' flat with parapet, 'o' onion dome, 's' spire (shikhara), 'g' gate
+  const AYODHYA_BACK = [[0, 40, 50, 'o'], [36, 30, 70, 's'], [62, 50, 44, 'f'], [104, 26, 64, 'o'], [128, 40, 52, 'f'],
+    [166, 22, 84, 's'], [186, 50, 46, 'f'], [232, 18, 76, 's'], [248, 48, 58, 'o'], [294, 40, 48, 'f'],
+    [332, 22, 82, 's'], [352, 44, 54, 'o'], [394, 36, 46, 'f'], [428, 22, 72, 's'], [448, 40, 50, 'o']];
+  const AYODHYA_FRONT = [[0, 54, 26, 'f'], [52, 30, 34, 'o'], [80, 60, 22, 'f'], [138, 26, 40, 's'],
+    [162, 56, 28, 'f'], [214, 52, 46, 'g'], [264, 50, 26, 'f'], [312, 28, 38, 'o'], [338, 56, 24, 'f'],
+    [392, 26, 42, 's'], [416, 64, 28, 'f']];
+
+  function building(ctx, x, w, h, roof, col, base) {
+    const top = base - h, cx = x + w / 2;
+    rect(ctx, x, top, w, h, col);
+    if (roof === 'f') for (let i = x; i < x + w; i += 4) rect(ctx, i, top - 2, 2, 2, col);
+    else if (roof === 'o') onion(ctx, cx, top, Math.min(12, w / 2.5), col);
+    else if (roof === 's') spire(ctx, cx, top - 20, w / 2, 20, col);
+    else if (roof === 'g') {                       // grand gate: arch + two small domes
+      onion(ctx, x + 8, top, 6, col); onion(ctx, x + w - 8, top, 6, col);
+      spire(ctx, cx, top - 14, 10, 14, col);
+    }
+    return top;
+  }
+
+  // Every diya in the scene, with the moment it lights. Lit left → right.
+  function ayodhyaDiyas() {
+    const list = [];
+    // along the riverbank (the main row)
+    for (let x = 6; x < W; x += 12) list.push({ x, y: BANK - 1, big: true });
+    // along the rooftops of the front buildings
+    for (const [bx, w, h, roof] of AYODHYA_FRONT) {
+      if (roof !== 'f') continue;
+      for (let x = bx + 4; x < bx + w - 2; x += 8) list.push({ x, y: BANK - h - 3, big: false });
+    }
+    for (const d of list) d.t0 = 0.5 + (d.x / W) * 3.0 + (d.big ? 0 : 0.12);
+    return list;
+  }
+  const DIYAS5 = ayodhyaDiyas();
+
+  function sceneAyodhya(ctx, p) {
+    const t = p * 5;
+
+    // --- sky: deep navy → indigo near the horizon, stars, crescent moon
+    rect(ctx, 0, 0, W, 110, PAL.D);
+    dither(ctx, 110, 118, PAL.n);
+    rect(ctx, 0, 118, W, BANK - 118, PAL.n);
+    FX.stars(ctx, t + 9, { n: 90, seed: 21, maxY: 120 });
+    FX.light(ctx, 400, 40, 26, PAL.s, 0.35, 4);
+    FX.disc(ctx, 400, 40, 11, PAL.w);
+    FX.disc(ctx, 405, 36, 10, PAL.D);
+
+    // --- skyline: a dark back layer, then the near-black front layer
+    for (const [x, w, h, roof] of AYODHYA_BACK) building(ctx, x, w, h, roof, PAL.e, BANK);
+    for (const [x, w, h, roof] of AYODHYA_FRONT) building(ctx, x, w, h, roof, PAL.k, BANK);
+    // windows: a few warm squares that come on as the diya wave passes them
+    for (let i = 0; i < 40; i++) {
+      const [bx, w, h] = AYODHYA_FRONT[i % AYODHYA_FRONT.length];
+      const x = bx + 4 + Math.floor(hash(i, 51, 1) * (w - 8));
+      const y = BANK - 6 - Math.floor(hash(i, 51, 2) * (h - 10));
+      const on = t > 0.6 + (x / W) * 3.0 + hash(i, 51, 3) * 0.4;
+      rect(ctx, x, y, 2, 2, on ? (hash(i, 51, 4) < 0.5 ? PAL.y : PAL.o) : PAL.e);
+    }
+
+    // --- river: dark water with drifting ripple lines
+    rect(ctx, 0, BANK, W, H - BANK, PAL.D);
+    rect(ctx, 0, BANK, W, 1, PAL.e);
+    for (let i = 0; i < 40; i++) {
+      const y = BANK + 4 + Math.floor(hash(i, 52, 1) * (H - BANK - 6));
+      const x = (hash(i, 52, 2) * W + t * 10) % (W + 20) - 10;
+      rect(ctx, x, y, 4 + Math.floor(hash(i, 52, 3) * 8), 1, PAL.n);
+    }
+
+    // --- diyas: unlit = tiny dark pot; lit = flame + glow (+ a 'pop' as it lights)
+    DIYAS5.forEach((d, i) => {
+      const age = t - d.t0;
+      if (age < 0) { rect(ctx, d.x - 2, d.y - 1, 4, 2, PAL.u); return; }
+      const pop = 1 - seg(age, 0, 0.3);                     // extra brightness at ignition
+      const fl = hash(Math.floor(t * 8), i, 7) < 0.5;
+      // saffron (F), not salmon (o): additive salmon on navy turns pink
+      FX.light(ctx, d.x, d.y - 3, (d.big ? 7 : 3) + pop * 4, PAL.F, 0.55 + pop * 0.3, 3);
+      if (d.big) Sprites.draw(ctx, fl ? 'diya' : 'diya_b', d.x, d.y + 2);
+      else { rect(ctx, d.x - 1, d.y - 1, 3, 2, PAL.h); rect(ctx, d.x, d.y - 3 - (fl ? 1 : 0), 1, 2, PAL.y); }
+      // reflection in the river: a broken, wobbling vertical streak of light
+      if (d.big) {
+        for (let j = 0; j < 6; j++) {
+          const wob = Math.round(Math.sin(t * 4 + j + i) * 1.5);
+          ctx.save(); ctx.globalAlpha = 0.55 * (1 - j / 6);
+          rect(ctx, d.x - 1 + wob, BANK + 3 + j * 4, 3 - (j > 2 ? 1 : 0), 2, j < 2 ? PAL.y : PAL.o);
+          ctx.restore();
+        }
+      }
+    });
+
+    // --- the Pushpak Viman glides across the sky, gently bobbing
+    const S = 2;
+    const vx = lerp(-80, W + 80, seg(t, 0, 5));
+    const vy = 96 + Math.round(Math.sin(t * 2.2) * 3) - Math.round(Math.sin(seg(t, 0, 5) * Math.PI) * 18);
+    // gold sparkle trail behind it
+    FX.emit(ctx, t, {
+      x: (b) => lerp(-80, W + 80, seg(b, 0, 5)) - 40, y: (b) => 96 - Math.sin(seg(b, 0, 5) * Math.PI) * 18 - 4,
+      t0: -1, rate: 50, life: 0.9, spreadY: 14, vx: [-40, -10], vy: [-6, 20], g: 20, cols: [PAL.y, PAL.w, PAL.q], flicker: 0.3, seed: 502,
+    });
+    // fluffy clouds riding under the hull
+    for (let i = 0; i < 4; i++) {
+      const cx = vx - 40 + i * 26 + Math.round(Math.sin(t * 3 + i) * 2);
+      FX.disc(ctx, cx, vy - 2, 7 + (i % 2) * 2, PAL.s);
+      FX.disc(ctx, cx, vy - 4, 6 + (i % 2) * 2, PAL.w);
+    }
+    Sprites.draw(ctx, 'viman', vx, vy, { s: S });
+    // fluttering saffron flags on the two poles
+    for (const pole of [[10, 5], [50, 5]]) {
+      const pt = Sprites.at('viman', pole[0], pole[1], vx, vy, S, S);
+      for (let i = 0; i < 12; i++) {
+        const h = Math.round(7 * (1 - i / 12)) + 1;
+        const wave = Math.round(Math.sin(t * 9 - i * 0.5) * 1.5);
+        rect(ctx, pt.x - 1 - i, pt.y + wave + (7 - h) / 2, 1, h, i % 5 === 4 ? PAL.o : PAL.F); // flies backwards (wind)
+      }
+    }
+  }
+
+  // ===========================================================================
   // SCENE 7 — TEMPLE + TITLE (31–37 s)
   //   0.00–1.25  camera glides forward through a pillared corridor and out
   //   1.30–2.40  "HAPPY DIWALI" types in, letter by letter, with a gold glow
@@ -841,8 +967,7 @@
     { name: 'RAMA', dur: 8, xfade: 0.2, draw: sceneRama },
     { name: 'VICTORY', dur: 5, xfade: 0, draw: sceneVictory },
     { name: 'SITA', dur: 5, xfade: 0.3, draw: sceneSita },
-    { name: 'AYODHYA', dur: 5, xfade: 0.3,
-      draw: placeholder('5 AYODHYA', 'THE RETURN HOME', [PAL.D, PAL.n], PAL.y) },
+    { name: 'AYODHYA', dur: 5, xfade: 0.3, draw: sceneAyodhya },
     { name: 'COURT', dur: 4, xfade: 0.2,
       draw: placeholder('6 COURT', 'THE ROYAL TABLEAU', [PAL.m, PAL.r], PAL.q) },
     { name: 'TEMPLE', dur: 6, xfade: 0.2, draw: sceneTemple },

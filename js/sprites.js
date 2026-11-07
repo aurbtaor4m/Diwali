@@ -444,6 +444,49 @@
       '........kkkkkkk.',
       '................',
     ] },
+
+    // -------------------------------------------------------------------------
+    // PUSHPAK VIMAN — 64 × 32, the flying chariot, facing right.
+    // Reference: objects/pushpak_viman.png. A golden boat hull with a zigzag
+    // band, a scroll-curled stern, a white swan-head prow with an orange beak,
+    // and a domed pavilion in which tiny Rama (blue face, gold crown, saffron)
+    // and Sita (red saree) ride home. Flag poles at (10,5) and (50,5): the
+    // flags are drawn in code so they can flutter. Clouds are drawn in code.
+    // -------------------------------------------------------------------------
+    viman: { f: [
+      '.................................kyk............................',
+      '................................kyqqk...........................',
+      '..............................kyqrrqqqk.........................',
+      '............................kyqqqqqqqqqk.................kkk....',
+      '..........................kyqqqqqqqqqqqqk...............kwwwk...',
+      '..........q.............kyqqqqqqqqqqqqqqqk........q.....kwkwkoo.',
+      '..........u...........kyqqqqqqqqqqqqqqqqqqk.......u.....kwwwkkk.',
+      '..........u..........kkkkkkkkkkkkkkkkkkkkkkk......u......kwwk...',
+      '..........u............kqkuuukykuuuuuuuukqk.......u......kwwk...',
+      '..kkk.....u............kqkuukyqqkuukqkuukqk.......u.....kwwk....',
+      '.kyqqk....u............kqkuukBBBkukkfkkukqk.......u.....kwwk....',
+      'kyk.kqk...u............kqkuukBkBkukfkfkukqk.......u....kwwk.....',
+      'kqk..kq...u............kqkuukBBBkukfffkukqk.......u....kwwk.....',
+      '.kk..kq...u............kqkuuukkkuuukrkuukqk.......u...kwwwk.....',
+      '.....kq...u............kqkuukFFFkukrrrkukqk.......u...kwwwk.....',
+      '.....kq...u............kqkuukFFFkukrrrkukqk.......u..kqwwwk.....',
+      '....kqqkkkkkkkkkkkkkkkkkqkkkkkkkkkkkkkkkkqkkkkkkkkkkkyqqqk......',
+      '.....kyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyykwwkyykqqqk.......',
+      '.....kGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGkwskGGGGGGk.......',
+      '.....kqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqkkqqqqqqqk.......',
+      '.....kGGyyGGyyGGyyGGyyGGyyGGyyGGyyGGyyGGyyGGyyGGyyGGyyGGk.......',
+      '.....kGyyGGyyGGyyGGyyGGyyGGyyGGyyGGyyGGyyGGyyGGyyGGyyGGyk.......',
+      '.....kqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqk.......',
+      '.....kqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqk.........',
+      '.......kqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqk...........',
+      '.........kGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGk.............',
+      '...........kGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGk...............',
+      '.............kGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGk.................',
+      '.................kkkkkkkkkkkkkkkkkkkkkkkkkkkkkk.................',
+      '................................................................',
+      '................................................................',
+      '................................................................',
+    ] },
   };
 
   // Named colour swaps: reuse one drawing with different colours.
