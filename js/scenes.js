@@ -776,6 +776,117 @@
   }
 
   // ===========================================================================
+  // SCENE 6 — COURT (27–31 s)
+  // A stable tableau: Rama and Sita on the throne, Lakshman (left) and
+  // Hanuman (right) at their sides, followers behind, against red and gold.
+  // Toran garlands, swaying akash kandils, flickering lamps, falling petals,
+  // and everyone breathing gently (a 1-art-pixel bob, each on its own rhythm).
+  // ===========================================================================
+
+  // Garland of marigolds hanging in a curve between two hooks.
+  // y = top + sag · sin(π·s) gives a nice droop (0 at both ends, max in the middle).
+  function toran(ctx, x0, x1, top, sag, t) {
+    for (let x = x0; x <= x1; x += 5) {
+      const s = (x - x0) / (x1 - x0);
+      const y = top + Math.sin(Math.PI * s) * sag;
+      FX.disc(ctx, x, y, 2.5, (x / 5) % 2 ? PAL.F : PAL.o);
+      FX.px(ctx, x, y - 1, PAL.y);
+      // a mango leaf hangs from every third flower
+      if (Math.round(x / 5) % 3 === 0) {
+        const sw = Math.sin(t * 2 + x) > 0.7 ? 1 : 0;
+        rect(ctx, x + sw, y + 3, 2, 4, PAL.g);
+        FX.px(ctx, x + sw, y + 7, PAL.v);
+      }
+    }
+  }
+
+  function sceneCourt(ctx, p) {
+    const t = p * 4;
+    const S = 2;
+    const breathe = (phase) => (Math.sin(t * 2.4 + phase) > 0.35 ? S : 0); // 1 art px = 2 screen px
+
+    // --- the hall: maroon wall, three arches, gold pillars
+    rect(ctx, 0, 0, W, 200, PAL.m);
+    for (const [cx, r] of [[240, 96], [74, 52], [406, 52]]) {
+      FX.disc(ctx, cx, 200 - r * 1.1, r + 3, PAL.q);         // gold arch trim
+      FX.disc(ctx, cx, 200 - r * 1.1, r, PAL.r);
+      rect(ctx, cx - r - 3, 200 - r * 1.1, (r + 3) * 2, r * 1.1, PAL.q);
+      rect(ctx, cx - r, 200 - r * 1.1, r * 2, r * 1.1, PAL.r);
+    }
+    for (const x of [8, 140, 328, 460]) {
+      rect(ctx, x, 30, 12, 170, PAL.q);
+      rect(ctx, x + 8, 30, 4, 170, PAL.G);
+      rect(ctx, x - 3, 26, 18, 6, PAL.y);
+      rect(ctx, x - 3, 194, 18, 6, PAL.G);
+    }
+    // --- floor: gold tiles and a red carpet leading to the throne
+    rect(ctx, 0, 200, W, H - 200, PAL.G);
+    for (let y = 206; y < H; y += 10) rect(ctx, 0, y, W, 1, PAL.q);
+    ctx.fillStyle = PAL.r;
+    for (let y = 214; y < H; y++) {
+      const half = 60 + (y - 214) * 0.9;
+      ctx.fillRect(Math.round(240 - half), y, Math.round(half * 2), 1);
+    }
+    for (let y = 214; y < H; y++) {
+      const half = 60 + (y - 214) * 0.9;
+      FX.px(ctx, 240 - half, y, PAL.y); FX.px(ctx, 240 + half - 1, y, PAL.y);
+    }
+
+    // --- followers: dark silhouettes standing behind, facing the throne
+    const crowd = [[34, 'hanuman', 1], [62, 'sita_pray', 1], [92, 'lakshman', 1], [126, 'hanuman', 1],
+      [354, 'hanuman', -1], [388, 'sita_pray', -1], [418, 'lakshman', -1], [448, 'hanuman', -1]];
+    crowd.forEach(([x, name, dir], i) => {
+      Sprites.draw(ctx, name, x, 206 - (Math.sin(t * 2 + i * 1.7) > 0.5 ? 1 : 0), { sx: dir, mode: 'k', alpha: 0.6 });
+    });
+
+    // --- warm halo behind the royal couple, then the throne
+    FX.light(ctx, 240, 140, 80, PAL.y, 0.45 + 0.05 * Math.sin(t * 2), 5);
+    // the throne is drawn at 3× (240×168) so its tall back rises well above
+    // the royal couple; they sit on its seat cushion at 2× like everyone else
+    Sprites.draw(ctx, 'throne', 240, 234, { s: 3 });
+    Sprites.draw(ctx, 'rama_seated', 208, 200 - breathe(0), { s: S });
+    Sprites.draw(ctx, 'sita_seated', 274, 200 - breathe(1.3), { s: S });
+
+    // --- Lakshman (left, facing in) and Hanuman (right, flipped to face in)
+    Sprites.draw(ctx, 'lakshman', 112, 238 - breathe(2.1), { s: S });
+    Sprites.draw(ctx, 'hanuman', 368, 238 - breathe(3.4), { sx: -S, sy: S });
+
+    // --- tall brass lamps (deepstambh) at both sides, flames flickering
+    for (const [x, i] of [[30, 0], [450, 1]]) {
+      rect(ctx, x - 2, 150, 5, 90, PAL.q);
+      rect(ctx, x - 8, 236, 17, 4, PAL.G);
+      rect(ctx, x - 7, 146, 15, 4, PAL.q);
+      const fl = hash(Math.floor(t * 10), i, 2) < 0.5 ? 1 : 0;
+      FX.light(ctx, x, 140, 16 + fl * 2, PAL.F, 0.8, 4);
+      rect(ctx, x - 1, 139 - fl, 3, 6 + fl, PAL.o);
+      rect(ctx, x, 141 - fl, 1, 3, PAL.y);
+    }
+    // --- a row of diyas along the front edge
+    for (let x = 20, i = 0; x < W; x += 40, i++) {
+      if (Math.abs(x - 240) < 70) continue;            // keep the carpet clear
+      const fl = hash(Math.floor(t * 8), i, 4) < 0.5;
+      FX.light(ctx, x, 260, 7, PAL.F, 0.55, 3);
+      Sprites.draw(ctx, fl ? 'diya' : 'diya_b', x, 268);
+    }
+
+    // --- akash kandils hanging from the ceiling, swaying
+    [[48, 34], [190, 22], [290, 22], [432, 34]].forEach(([x, len], i) => {
+      const sway = Math.round(Math.sin(t * 1.8 + i * 1.3) * 3);
+      FX.line(ctx, x, 0, x + sway, len, PAL.u);
+      FX.light(ctx, x + sway, len + 18, 14, PAL.y, 0.5, 3);   // the candle glowing inside
+      Sprites.draw(ctx, 'kandil', x + sway, len + 32, { s: 2 });
+    });
+    // --- toran garlands across the top
+    for (let x0 = 0; x0 < W; x0 += 80) toran(ctx, x0, x0 + 80, 4, 12, t);
+
+    // --- petals drifting down over the scene
+    FX.emit(ctx, t, {
+      x: W / 2, y: -4, spreadX: W, rate: 18, life: 4.5, t0: -3,
+      vx: [-10, 10], vy: [26, 42], cols: [PAL.F, PAL.i, PAL.y, PAL.r], size: [2, 2], fade: false, seed: 601,
+    });
+  }
+
+  // ===========================================================================
   // SCENE 7 — TEMPLE + TITLE (31–37 s)
   //   0.00–1.25  camera glides forward through a pillared corridor and out
   //   1.30–2.40  "HAPPY DIWALI" types in, letter by letter, with a gold glow
@@ -949,27 +1060,13 @@
     FX.flash(ctx, ease(seg(t, T_FADE, 6)), '#000000');
   }
 
-  // ===========================================================================
-  // Placeholders for scenes not built yet (replaced one at a time).
-  // ===========================================================================
-  function placeholder(title, sub, bg, fg) {
-    return function (ctx, p) {
-      FX.bands(ctx, 0, H, bg);
-      Font.draw(ctx, title, W / 2, H / 2 - 16, fg, 3, { align: 'center', shadow: PAL.k });
-      Font.draw(ctx, sub, W / 2, H / 2 + 6, PAL.w, 1, { align: 'center' });
-      ctx.fillStyle = PAL.k; ctx.fillRect(W / 2 - 60, H / 2 + 20, 120, 4);
-      ctx.fillStyle = fg; ctx.fillRect(W / 2 - 60, H / 2 + 20, Math.round(120 * p), 4);
-    };
-  }
-
   const SCENES = [
     { name: 'RAVANA', dur: 4, xfade: 0, draw: sceneRavana },
     { name: 'RAMA', dur: 8, xfade: 0.2, draw: sceneRama },
     { name: 'VICTORY', dur: 5, xfade: 0, draw: sceneVictory },
     { name: 'SITA', dur: 5, xfade: 0.3, draw: sceneSita },
     { name: 'AYODHYA', dur: 5, xfade: 0.3, draw: sceneAyodhya },
-    { name: 'COURT', dur: 4, xfade: 0.2,
-      draw: placeholder('6 COURT', 'THE ROYAL TABLEAU', [PAL.m, PAL.r], PAL.q) },
+    { name: 'COURT', dur: 4, xfade: 0.2, draw: sceneCourt },
     { name: 'TEMPLE', dur: 6, xfade: 0.2, draw: sceneTemple },
   ];
 
