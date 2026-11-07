@@ -142,6 +142,29 @@
     };
   }
 
+  // shakeFrame(): apply a shake offset to an ALREADY-DRAWN frame.
+  // Why not just ctx.translate() before drawing? Because moving everything by
+  // 7 px uncovers a 7 px strip at the screen edge (black). Instead we copy the
+  // finished frame and paste it back shifted; the edge strip simply keeps the
+  // old pixels, which nobody notices in a 2-frame jolt.
+  let shakeTmp = null;
+  function shakeFrame(ctx, off) {
+    if (!off.x && !off.y) return;
+    const c = ctx.canvas;
+    if (!shakeTmp || shakeTmp.width !== c.width) {
+      shakeTmp = document.createElement('canvas');
+      shakeTmp.width = c.width; shakeTmp.height = c.height;
+    }
+    const g = shakeTmp.getContext('2d');
+    g.clearRect(0, 0, c.width, c.height);
+    g.drawImage(c, 0, 0);
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.globalAlpha = 1;
+    ctx.drawImage(shakeTmp, off.x, off.y);
+    ctx.restore();
+  }
+
   // ------------------------------------------------------------- particles
   // emit(): a continuous particle emitter, computed analytically.
   // Particle i is born at time i/rate. At time t we only draw the ones still
@@ -404,6 +427,6 @@
     clamp, lerp, ease, easeOut, easeIn, easeOutBack, seg,
     mulberry32, hash, hrange,
     px, line, disc, glow, flash, bands,
-    shake, emit, burst, firework, anaar, fireWall, lightning, speedLines, stars,
+    shake, shakeFrame, emit, burst, firework, anaar, fireWall, lightning, speedLines, stars,
   };
 })(window);

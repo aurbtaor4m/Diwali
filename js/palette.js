@@ -47,6 +47,7 @@
     F: '#ff9a1f', // saffron (Rama's sash, flags)
     D: '#10142e', // deepest night sky
     L: '#9fd8a0', // pale green (Lakshman's dhoti)
+    E: '#ff4a4a', // glowing red eyes (Ravana) — its own letter so scenes can find the eye pixels
   };
 
   // Handy named aliases so scene code reads like English:

@@ -112,6 +112,7 @@
     playing: true,
     test: false,          // sprite test screen (T)
     testT0: 0,
+    testIdx: 0,           // which sprite the test screen magnifies (←/→)
     recording: false,
     lastTime: 0,
     frac: 0,              // fractional frames carried between rAF ticks
@@ -121,7 +122,7 @@
     if (state.test) {
       bctx.save();
       bctx.imageSmoothingEnabled = false;
-      drawTest(bctx, (performance.now() - state.testT0) / 1000);
+      drawTest(bctx, (performance.now() - state.testT0) / 1000, state.testIdx);
       bctx.restore();
     } else {
       renderFrame(state.frame);
@@ -200,8 +201,9 @@
       const i = +k - 1;
       if (i < timeline.length) { seek(timeline[i].start); state.test = false; }
     }
-    else if (k === 'ArrowRight') { state.playing = false; seek(state.frame + 1); }  // frame step
-    else if (k === 'ArrowLeft') { state.playing = false; seek(state.frame - 1); }
+    // ←/→ : on the test screen they pick a sprite; otherwise step one frame
+    else if (k === 'ArrowRight') { if (state.test) state.testIdx++; else { state.playing = false; seek(state.frame + 1); } }
+    else if (k === 'ArrowLeft') { if (state.test) state.testIdx--; else { state.playing = false; seek(state.frame - 1); } }
   });
 
   // ------------------------------------------------------------- recording
@@ -299,7 +301,7 @@
   const q = new URLSearchParams(location.search);
   if (q.has('frame')) seek(+q.get('frame'));
   if (q.has('scene')) seek(timeline[Math.max(0, Math.min(timeline.length - 1, +q.get('scene') - 1))].start);
-  if (q.has('test')) { state.test = true; state.testT0 = performance.now(); }
+  if (q.has('test')) { state.test = true; state.testT0 = performance.now(); state.testIdx = +q.get('test') || 0; }
   if (q.has('paused') || q.has('frame')) state.playing = false;
 
   window.addEventListener('resize', resize);

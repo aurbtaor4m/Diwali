@@ -79,6 +79,66 @@
       '......kBBBNk...kBBBBNk....kyk...', // feet; bow bottom tip
       '......kkkkkk...kkkkkkk.....k....',
     ] },
+
+    // -------------------------------------------------------------------------
+    // RAVANA — ten crowned heads (one large centre head, 4 heads on one side
+    // and 5 on the other), gold collar and belt, maroon armour skirt, curved
+    // sword. 48 × 48, faces the viewer. Reference: ravana.png
+    //   E = glowing eye pixels (scenes find these with Sprites.points())
+    //   h/u = skin   q/y/G = gold   m/p = maroon armour + folds   s/w = blade
+    // Built from three small hand-drawn parts (side head 5×10, centre head
+    // 10×17, body) stamped together, then pasted here as one grid.
+    // -------------------------------------------------------------------------
+    ravana: { f: [
+      '.....................kk.........................',
+      '....................kyyk........................',
+      '....................kqqk........................',
+      '...................kyqqyk.......................',
+      '...................kqrrqk.......................',
+      '..................kyqrrqyk......................',
+      '..................kyqqqqyk......................',
+      '..k...k...k...k..kGqyqqyqGk..k...k...k...k...k..',
+      '.kyk.kyk.kyk.kyk.kuhhhhhhuk.kyk.kyk.kyk.kyk.kyk.',
+      'kqrqkqrqkqrqkqrqkkhhhwwhhhkkqrqkqrqkqrqkqrqkqrqk',
+      'kGqGkGqGkGqGkGqGkkhkkhhkkhkkGqGkGqGkGqGkGqGkGqGk',
+      'khhhkhhhkhhhkhhhkkhEEhhEEhkkhhhkhhhkhhhkhhhkhhhk',
+      'kEhEkEhEkEhEkEhEkkhhhuuhhhkkEhEkEhEkEhEkEhEkEhEk',
+      'khuhkhuhkhuhkhuhkkkkkkkkkkkkhuhkhuhkhuhkhuhkhuhk',
+      'kkkkkkkkkkkkkkkkkkkhhrrhhkkkkkkkkkkkkkkkkkkkkkkk',
+      '.khk.khk.khk.khk..khhhhhhk..khk.khk.khk.khk.khk.',
+      '..k...k...k...k....kkkkkk....k...k...k...k...k..',
+      '...................kuhhuk.......................',
+      '...........kqqqkkqyqqqqqqyqkkqqqk...............',
+      '..........kqyqqkqyqrqqqqrqyqkqqyqk..............',
+      '..........kGqqGkkqyqqrrqqyqkkGqqGk..............',
+      '..........kkGGkhhkqyqqqqyqkhhkGGkk..............',
+      '..........khhkuhhhhkqyyqkeehhukhhk..............',
+      '..........kqqkuhhhhhkrrkeehhhukqqk..............',
+      '..........khhkuhhhhhhuueehhhhukhhk..............',
+      '..........khhkuhhhhhhueehhhhhukhhk..............',
+      '..........khhkuhhhhhheehhhhhhukuhhk.............',
+      '..........kqqkuhhhhheeuhhhhhhukhqqk.............',
+      '.........khhhhkhhuheeuhhuhhukhkhhk..............',
+      '.........kkkkkqqyqqqyrryqqqyqkhhk...............',
+      '.......kqyqqkkGGGGGGGGGGGGGGGGk.................',
+      '........kswk.kmmpmmmpmmmpmmpmmk.................',
+      '........kswk.kmmpmmmpmmmpmmpmmk.................',
+      '.......kswk..kmmpmmmpmmmpmmpmmk.................',
+      '.......kswk..kmmpmmmpmmmpmmpmmk.................',
+      '......kswk..kmmmpmmmpmmmpmmpmmmk................',
+      '.....kswk...kmmmpmmmpkkmpmmpmmmk................',
+      '.....kswk...kmmmpmmmpkkmpmmpmmmk................',
+      '....kswk....kmmmpmmmpkkmpmmpmmmk................',
+      '...kswk....kyqqyqqyqqkkqyqqyqqyqk...............',
+      '..kswk.....kqqyqqyqqykkyqqyqqyqqk...............',
+      '.kswk......kqyqqyqqyqkkqqyqqyqqyk...............',
+      '.ksk..........khhhk...kk...khhhk................',
+      '.k............khuhk........khuhk................',
+      '..............kqqqk........kqqqk................',
+      '.............kuuuuk........kuuuuk...............',
+      '.............kuuuuuk......kuuuuuk...............',
+      '.............kkkkkkk......kkkkkkk...............',
+    ] },
   };
 
   // Named colour swaps: reuse one drawing with different colours.
@@ -155,8 +215,28 @@
     ctx.restore();
   }
 
+  // Where are all the pixels of colour `letter` in a sprite, on screen?
+  // Pass the same x, y, sx, sy you gave draw() (bottom-centre anchor).
+  // Returns the screen-space centre of each matching pixel.
+  // Example: Sprites.points('ravana', 'E', 240, 230, 3, 3) → all 20 eyes,
+  // so the scene can draw a glow on top of each one.
+  const pointCache = {};
+  function points(name, letter, x = 0, y = 0, sx = 1, sy = 1) {
+    const key = name + ':' + letter;
+    if (!pointCache[key]) {
+      const rows = resolve(name).rows;
+      const h = rows.length, w = rows[0].length;
+      const list = [];
+      for (let j = 0; j < h; j++) {
+        for (let i = 0; i < w; i++) if (rows[j][i] === letter) list.push([i + 0.5 - w / 2, j + 0.5 - h]);
+      }
+      pointCache[key] = list;
+    }
+    return pointCache[key].map(([px, py]) => ({ x: Math.round(x) + px * sx, y: Math.round(y) + py * sy }));
+  }
+
   function size(name) { const c = get(name); return { w: c.width, h: c.height }; }
   function names() { return Object.keys(S).concat(Object.keys(VARIANTS)); }
 
-  root.Sprites = { get, draw, size, names, raw: S };
+  root.Sprites = { get, draw, points, size, names, raw: S };
 })(window);
