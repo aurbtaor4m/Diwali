@@ -411,6 +411,108 @@
   }
 
   // ===========================================================================
+  // SCENE 3 — VICTORY BURST (12–17 s)
+  //   0.00–0.15  the arrow streaks in and strikes Ravana
+  //   0.15–0.55  white flash, big shake, Ravana flickers white
+  //   0.55       he bursts into golden light
+  //   0.50–1.90  layered sine-wave fire bands sweep across the whole screen
+  //   1.90–2.80  the fire calms and sinks to a low glow
+  //   2.00–5.00  fireworks: anaar fountains + rockets bursting overhead
+  // ===========================================================================
+
+  // One table describing every rocket in the show, so the timing is easy to
+  // tweak: [launch time, x, burst height, colours, extra ring colour]
+  const ROCKETS = [
+    [2.0, 120, 70, [PAL.o, PAL.y, PAL.w], PAL.c],
+    [2.25, 340, 55, [PAL.i, PAL.w, PAL.z], null],
+    [2.55, 240, 40, [PAL.y, PAL.q, PAL.w], PAL.r],
+    [2.85, 60, 95, [PAL.c, PAL.a, PAL.w], null],
+    [3.1, 410, 80, [PAL.l, PAL.g, PAL.w], PAL.y],
+    [3.35, 180, 60, [PAL.r, PAL.o, PAL.y], null],
+    [3.6, 300, 90, [PAL.z, PAL.i, PAL.w], PAL.a],
+    [3.85, 440, 45, [PAL.y, PAL.w, PAL.o], null],
+    [4.05, 100, 50, [PAL.a, PAL.c, PAL.w], PAL.i],
+    [4.3, 260, 75, [PAL.o, PAL.y, PAL.r], PAL.w],
+  ];
+  // anaar (fountain) positions along the ground and when each is lit
+  const ANAARS = [[70, 2.1, 70], [190, 2.3, 95], [300, 2.2, 85], [420, 2.4, 75]];
+
+  function sceneVictory(ctx, p) {
+    const t = p * 5;
+    const X = 240, GROUND = 242, S = 3;  // Ravana exactly where scene 1 left him
+    const HIT = 0.15, BURST = 0.55;
+
+    drawLanka(ctx, t + 4);   // +4 so stars/torches continue from scene 1
+
+    // --- the arrow arrives (continuing left-to-right from scene 2)
+    const chest = Sprites.at('ravana', 22, 25, X, GROUND, S, S);
+    if (t < HIT) {
+      const ax = lerp(-60, chest.x - 48, t / HIT);
+      for (let j = 3; j >= 1; j--) Sprites.draw(ctx, 'arrow', ax - j * 20, chest.y - 7, { s: S, anchor: 'tl', mode: 'w', alpha: 0.3 / j });
+      FX.emit(ctx, t, {
+        x: (b) => lerp(-60, chest.x - 48, b / HIT), y: chest.y, t0: -0.3, t1: HIT, rate: 200, life: 0.4,
+        vx: [-200, -60], vy: [-60, 60], g: 120, kind: 'spark', cols: [PAL.w, PAL.y, PAL.q], seed: 81,
+      });
+    }
+
+    // --- Ravana: struck, flickering, then gone in a burst of light
+    if (t < BURST) {
+      const struck = t >= HIT;
+      // flicker white every other frame after the hit, and get knocked back a bit
+      const flick = struck && Math.floor(t * 30) % 2 === 0;
+      const knock = struck ? Math.round(6 * Math.sin(seg(t, HIT, BURST) * Math.PI)) : 0;
+      // he swells slightly just before bursting
+      const swell = 1 + 0.12 * easeIn(seg(t, 0.3, BURST));
+      Sprites.draw(ctx, 'ravana', X + knock, GROUND, { sx: S * swell, sy: S * swell, mode: flick ? 'w' : 'n' });
+      if (struck) Sprites.draw(ctx, 'arrow', chest.x - 48 + knock, chest.y - 7, { s: S, anchor: 'tl' });
+    }
+    // --- the fire wall: sweeps in from the left, towers, then calms down
+    // `front` = x of the leading edge; `scale` = overall flame height
+    const front = lerp(-80, W + 140, easeOut(seg(t, 0.85, 1.6)));
+    const rise = easeOut(seg(t, 0.85, 1.4));
+    const calm = ease(seg(t, 1.75, 2.6));
+    const scale = rise * lerp(1.9, 0.3, calm);
+    if (scale > 0) FX.fireWall(ctx, t, front, { scale });
+
+    // Ravana's burst of light — drawn OVER the fire so it stays visible
+    if (t >= BURST) {
+      const age = t - BURST;
+      // three layered bursts: big golden ring, orange core, white sparks
+      FX.light(ctx, X, GROUND - 70, 90 * (1 - seg(age, 0, 0.6)), PAL.y, 0.9, 4);
+      FX.burst(ctx, age, { x: X, y: GROUND - 70, n: 70, power: 260, g: 50, life: 1.6, cols: [PAL.y, PAL.q, PAL.w], seed: 91, trail: 4, drag: 1.6, tAbs: t });
+      FX.burst(ctx, age, { x: X, y: GROUND - 70, n: 40, power: 140, g: 80, life: 1.2, cols: [PAL.o, PAL.r, PAL.y], seed: 92, trail: 3, tAbs: t });
+      FX.burst(ctx, age, { x: X, y: GROUND - 110, n: 30, power: 320, g: 30, life: 1.0, cols: [PAL.w], seed: 93, trail: 5, drag: 2.8, tAbs: t });
+    }
+    // flying embers off the top of the fire
+    FX.emit(ctx, t, {
+      x: W / 2, y: H - 20, spreadX: W, spreadY: 20, t0: 0.6, rate: 60, life: 1.6,
+      vx: [-20, 20], vy: [-110, -40], g: -10, cols: [PAL.y, PAL.o, PAL.w], size: [1, 2], flicker: 0.3, seed: 94,
+    });
+
+    // --- fireworks (drawn over the fire so the sky show reads clearly)
+    for (let i = 0; i < ROCKETS.length; i++) {
+      const [t0, x, yTop, cols, ring] = ROCKETS[i];
+      FX.firework(ctx, t - t0, {
+        x, yGround: H - 30, yTop, drift: (hash(i, 5) - 0.5) * 30, rise: 0.65,
+        cols, ring, n: 40, power: 95 + hash(i, 6) * 40, seed: 100 + i * 7, life: 1.5,
+      });
+      // each shell briefly tints the whole sky its colour as it bursts
+      const ba = t - t0 - 0.65;
+      if (ba >= 0 && ba < 0.15) FX.flash(ctx, 0.1 * (1 - ba / 0.15), cols[0]);
+    }
+    for (const [x, tLit, hgt] of ANAARS) {
+      FX.anaar(ctx, t - tLit, { x, y: H - 14, height: hgt, seed: 200 + x });
+    }
+
+    // --- overlays (not shaken): white flash on impact, then the big shake
+    FX.flash(ctx, 1 - seg(t, HIT, HIT + 0.35), PAL.w);
+    FX.flash(ctx, 0.8 * (1 - seg(t, BURST, BURST + 0.25)) * (t >= BURST ? 1 : 0), PAL.y);
+    let sh = FX.shake(t, HIT, 0.9, 10, 4);
+    if (t >= BURST) { const s2 = FX.shake(t, BURST, 0.8, 8, 5); sh = { x: sh.x + s2.x, y: sh.y + s2.y }; }
+    FX.shakeFrame(ctx, sh);
+  }
+
+  // ===========================================================================
   // Placeholders for scenes not built yet (replaced one at a time).
   // ===========================================================================
   function placeholder(title, sub, bg, fg) {
@@ -426,8 +528,7 @@
   const SCENES = [
     { name: 'RAVANA', dur: 4, xfade: 0, draw: sceneRavana },
     { name: 'RAMA', dur: 8, xfade: 0.2, draw: sceneRama },
-    { name: 'VICTORY', dur: 5, xfade: 0,
-      draw: placeholder('3 VICTORY', 'FIRE AND FIREWORKS', [PAL.m, PAL.r], PAL.y) },
+    { name: 'VICTORY', dur: 5, xfade: 0, draw: sceneVictory },
     { name: 'SITA', dur: 5, xfade: 0.3,
       draw: placeholder('4 SITA', 'RANGOLI OF LIGHT', [PAL.G, PAL.q], PAL.w) },
     { name: 'AYODHYA', dur: 5, xfade: 0.3,

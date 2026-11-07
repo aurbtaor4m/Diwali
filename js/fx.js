@@ -340,21 +340,28 @@
   function fireWall(ctx, t, front, o) {
     const baseY = o.baseY ?? H;
     const layers = o.layers || [
-      { col: '#b13e53', h: 150, amp: 22, freq: 0.045, speed: 5.0, phase: 0 },
-      { col: '#ef7d57', h: 110, amp: 18, freq: 0.06, speed: 6.5, phase: 2 },
-      { col: '#ffcd75', h: 70, amp: 14, freq: 0.08, speed: 8.0, phase: 4 },
-      { col: '#f4f4f4', h: 30, amp: 8, freq: 0.11, speed: 9.5, phase: 1 },
+      { col: '#b13e53', h: 140, amp: 20, freq: 0.05, speed: 5.0, phase: 0 },
+      { col: '#ef7d57', h: 100, amp: 17, freq: 0.065, speed: 6.5, phase: 2 },
+      { col: '#ffcd75', h: 58, amp: 13, freq: 0.085, speed: 8.0, phase: 4 },
+      { col: '#f4f4f4', h: 20, amp: 6, freq: 0.12, speed: 9.5, phase: 1 },
     ];
     const scale = o.scale ?? 1; // shrink the whole fire (used when it calms)
+    const tick = Math.floor(t * 15);
     for (const Ly of layers) {
       ctx.fillStyle = Ly.col;
       for (let x = 0; x < W; x += 2) {
         // flame leans/tapers to nothing over the last 60 px before the front
         const edge = clamp((front - x) / 60);
         if (edge <= 0) continue;
+        // 1) two rolling sine waves = the slow, big body of the fire
         const wob = Math.sin(x * Ly.freq + t * Ly.speed + Ly.phase) * Ly.amp
           + Math.sin(x * Ly.freq * 2.3 - t * Ly.speed * 1.3 + Ly.phase) * Ly.amp * 0.5;
-        const hgt = Math.max(0, (Ly.h + wob) * edge * scale);
+        // 2) |sin|^6 is near zero most of the time with sharp peaks — those
+        //    peaks become pointed flame TONGUES licking upward
+        const tongue = Math.pow(Math.abs(Math.sin(x * Ly.freq * 3.1 + t * Ly.speed * 0.9 + Ly.phase * 2)), 6) * Ly.amp * 1.8;
+        // 3) a little per-column jitter that changes 15×/s = flicker
+        const jit = (hash(x >> 1, tick, Ly.h) - 0.5) * 6;
+        const hgt = Math.max(0, (Ly.h + wob + tongue + jit) * edge * scale);
         // quantise to 2-px steps so the top edge looks chunky, not smooth
         const hq = Math.round(hgt / 2) * 2;
         ctx.fillRect(x, baseY - hq, 2, hq);
