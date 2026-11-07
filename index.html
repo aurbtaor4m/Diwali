@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Happy Diwali</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- The visible canvas. Its pixel size is set by main.js (480×270 × k). -->
+  <canvas id="screen" width="480" height="270"></canvas>
+
+  <!-- Playback bar. Hidden automatically while recording. -->
+  <div id="hud">
+    <button id="play" title="Play / pause (Space)">❚❚</button>
+    <div id="track">
+      <input id="scrub" type="range" min="0" max="1109" value="0" step="1" aria-label="Timeline">
+      <div id="marks"></div>
+    </div>
+    <span id="time"></span>
+    <button id="rec" title="Render every frame to diwali.webm">● Record</button>
+  </div>
+  <div id="help">SPACE play/pause · R restart · 1–7 scenes · T sprite test · ←/→ step frame</div>
+  <div id="status"></div>
+
+  <!-- Plain scripts, loaded in dependency order. No modules, no build step,
+       so it works from any static server (python http.server, Live Server). -->
+  <script src="js/palette.js"></script>
+  <script src="js/font.js"></script>
+  <script src="js/fx.js"></script>
+  <script src="js/sprites.js"></script>
+  <script src="js/scenes.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

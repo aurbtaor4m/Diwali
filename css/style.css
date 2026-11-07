@@ -1,0 +1,88 @@
+/* Page chrome for the Diwali card. The art itself lives on the canvas. */
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: #0d0e17;
+  overflow: hidden;
+  font-family: system-ui, sans-serif;
+}
+
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Keep pixels as hard squares when the browser scales the canvas. */
+canvas {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  display: block;
+}
+
+/* ---- playback bar (overlays the bottom of the window) ---- */
+#hud {
+  position: fixed;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%);
+  width: min(900px, calc(100% - 32px));
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: rgba(26, 28, 44, 0.85);
+  border: 2px solid #333c57;
+  color: #f4f4f4;
+  font-size: 13px;
+  opacity: 0.25;
+  transition: opacity 0.2s;
+}
+#hud:hover { opacity: 1; }
+
+#hud button {
+  background: #333c57;
+  color: #ffcd75;
+  border: 2px solid #566c86;
+  padding: 4px 10px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+#hud button:hover { background: #566c86; }
+#rec { color: #ff8fb0 !important; white-space: nowrap; }
+
+#track { position: relative; flex: 1; }
+#scrub { width: 100%; accent-color: #e6a33c; margin: 0; }
+#marks { position: relative; height: 12px; }
+#marks span {
+  position: absolute;
+  transform: translateX(-50%);
+  font-size: 10px;
+  color: #94b0c2;
+}
+
+#time { min-width: 210px; text-align: right; font-variant-numeric: tabular-nums; }
+
+#help {
+  position: fixed;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #566c86;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+#status {
+  position: fixed;
+  top: 8px;
+  left: 12px;
+  color: #ff8fb0;
+  font-size: 13px;
+}
+
+/* While recording, hide everything except the canvas and the status line. */
+body.recording #hud,
+body.recording #help { display: none; }
