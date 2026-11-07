@@ -513,6 +513,180 @@
   }
 
   // ===========================================================================
+  // SCENE 7 — TEMPLE + TITLE (31–37 s)
+  //   0.00–1.25  camera glides forward through a pillared corridor and out
+  //   1.30–2.40  "HAPPY DIWALI" types in, letter by letter, with a gold glow
+  //   2.50–3.25  "FROM ABHIRAM TAWALARE" types in below
+  //   3.25–5.25  hold (2 s) — fireworks keep going, diyas flicker
+  //   5.25–6.00  fade to black
+  // ===========================================================================
+  const TITLE = 'HAPPY DIWALI', BYLINE = 'FROM ABHIRAM TAWALARE';
+  const T_TITLE = 1.3, PER_TITLE = 0.09;    // seconds per letter
+  const T_BY = 2.5, PER_BY = 0.035;
+  const T_FADE = 5.25;
+  const ROCKETS7 = [
+    [1.6, 70, 50, [PAL.y, PAL.w, PAL.q], PAL.r], [2.1, 410, 40, [PAL.i, PAL.w, PAL.z], null],
+    [2.7, 110, 70, [PAL.c, PAL.a, PAL.w], PAL.y], [3.1, 380, 75, [PAL.o, PAL.y, PAL.w], null],
+    [3.6, 40, 35, [PAL.l, PAL.w, PAL.g], PAL.i], [4.0, 440, 60, [PAL.y, PAL.q, PAL.w], PAL.c],
+    [4.5, 140, 45, [PAL.z, PAL.i, PAL.w], null], [4.9, 350, 50, [PAL.a, PAL.w, PAL.c], PAL.y],
+  ];
+
+  // A round, layered tree: dark base, mid-green, light highlights; sways 1 px.
+  function tree(ctx, x, yBase, r, t, i) {
+    const sway = Math.sin(t * 1.5 + i) > 0.6 ? 1 : 0;
+    rect(ctx, x - 2, yBase - r, 5, r, PAL.u);                  // trunk
+    FX.disc(ctx, x + sway, yBase - r * 1.5, r, PAL.v);
+    FX.disc(ctx, x - r * 0.45 + sway, yBase - r * 1.3, r * 0.7, PAL.v);
+    FX.disc(ctx, x + r * 0.5 + sway, yBase - r * 1.25, r * 0.65, PAL.v);
+    FX.disc(ctx, x - r * 0.2 + sway, yBase - r * 1.75, r * 0.6, PAL.g);
+    FX.disc(ctx, x - r * 0.35 + sway, yBase - r * 1.9, r * 0.25, PAL.l);
+  }
+
+  // The outdoor view: dusk sky, trees, temple with waving flag, diyas.
+  const TEMPLE_X = 240, TEMPLE_Y = 254, TS = 2;   // temple drawn at 2× (192×160)
+  function drawTempleGrounds(ctx, t) {
+    // deep blue dusk: navy at the top, brighter blue toward the horizon
+    rect(ctx, 0, 0, W, 90, PAL.D);
+    dither(ctx, 90, 98, PAL.n);
+    rect(ctx, 0, 98, W, 70, PAL.n);
+    dither(ctx, 168, 176, PAL.b);
+    rect(ctx, 0, 176, W, 80, PAL.b);
+    FX.stars(ctx, t, { n: 50, seed: 9, maxY: 150 });
+
+    // trees on both sides (back row darker and smaller, then front row)
+    [[20, 22], [70, 26], [118, 20], [362, 20], [410, 26], [460, 22]].forEach(([x, r], i) => tree(ctx, x, 252, r, t, i));
+    // ground: dark grass with a lighter path leading to the steps
+    rect(ctx, 0, 252, W, H - 252, PAL.v);
+    rect(ctx, 0, 252, W, 1, PAL.g);
+    rect(ctx, TEMPLE_X - 40, 253, 80, H - 253, PAL.d);
+
+    // the temple, with a warm glow from inside the door
+    FX.light(ctx, TEMPLE_X, TEMPLE_Y - 30, 40, PAL.o, 0.35, 3);
+    Sprites.draw(ctx, 'temple', TEMPLE_X, TEMPLE_Y, { s: TS });
+    // saffron flag on a pole above the kalash, waving: each column of the
+    // triangle is shifted by a sine wave travelling along it
+    const top = Sprites.at('temple', 47, 0, TEMPLE_X, TEMPLE_Y, TS, TS);
+    rect(ctx, top.x, top.y - 26, 1, 26, PAL.u);
+    for (let i = 0; i < 22; i++) {
+      const h = Math.round(10 * (1 - i / 22)) + 1;               // tapers to a point
+      const wave = Math.round(Math.sin(t * 6 - i * 0.35) * 2);
+      rect(ctx, top.x + 1 + i, top.y - 26 + wave + (10 - h) / 2, 1, h, i % 7 === 6 ? PAL.o : PAL.F);
+    }
+
+    // diyas: on the two side platforms and in a row along the ground
+    const spots = [];
+    for (let i = 0; i < 4; i++) spots.push([TEMPLE_X - 88 + i * 10, TEMPLE_Y - 11], [TEMPLE_X + 58 + i * 10, TEMPLE_Y - 11]);
+    for (let x = 14; x < W; x += 26) if (Math.abs(x - TEMPLE_X) > 44) spots.push([x, 266]);
+    spots.forEach(([x, y], i) => {
+      const fl = hash(Math.floor(t * 8), i, 3) < 0.5;              // 8 flickers / s
+      FX.light(ctx, x, y - 6, fl ? 7 : 6, PAL.o, 0.55, 3);
+      Sprites.draw(ctx, fl ? 'diya' : 'diya_b', x, y);
+    });
+  }
+
+  // The corridor: dark interior, perspective pillars rushing past, and an
+  // opening at the end through which the temple grounds are seen.
+  // Perspective in one line: something at distance d appears 1/d as big.
+  function drawCorridor(ctx, t, camZ) {
+    const cx = W / 2, cy = 150;
+    const proj = (d) => 1 / d;                       // screen scale at depth d
+    const EXIT = 5.2;                                // depth of the doorway
+    const dE = EXIT - camZ;
+    if (dE <= 0.35) return;                          // we're outside now
+    const s = proj(dE);
+    const ox0 = cx - 150 * s, ox1 = cx + 150 * s;    // opening rectangle
+    const oy0 = cy - 110 * s, oy1 = cy + 104 * s;
+    // fill everything EXCEPT the opening with the dark interior
+    ctx.fillStyle = PAL.u;
+    ctx.fillRect(0, 0, W, Math.max(0, oy0));
+    ctx.fillRect(0, oy1, W, H - oy1);
+    ctx.fillRect(0, oy0, Math.max(0, ox0), oy1 - oy0);
+    ctx.fillRect(ox1, oy0, W - ox1, oy1 - oy0);
+    // floor: lighter stone bands that converge toward the opening
+    for (let k = 0; k < 6; k++) {
+      const d = (k + 1) * 1.0 - (camZ % 1.0);
+      if (d <= 0.2 || d >= dE) continue;
+      const y = cy + 104 / d;
+      if (y < H) rect(ctx, 0, y, W, 2, PAL.h);
+    }
+    // ceiling beams
+    for (let k = 0; k < 6; k++) {
+      const d = (k + 1) * 1.0 - (camZ % 1.0);
+      if (d <= 0.2 || d >= dE) continue;
+      const y = cy - 110 / d;
+      if (y > 0) rect(ctx, 0, y - 3 / d, W, Math.max(1, 4 / d), PAL.k);
+    }
+    // pillar pairs, drawn far → near so near ones cover far ones
+    for (let z = 4; z >= 1; z--) {
+      const d = z - camZ + 0.6;
+      if (d <= 0.25 || d >= dE) continue;
+      const k = proj(d);
+      const pw = 30 * k;                              // pillar width
+      const top = cy - 110 * k, bot = cy + 104 * k;
+      for (const side of [-1, 1]) {
+        const x = cx + side * 150 * k - (side < 0 ? pw : 0);
+        rect(ctx, x, top, pw, bot - top, PAL.x);                       // body
+        rect(ctx, x + pw * (side < 0 ? 0.65 : 0), top, pw * 0.35, bot - top, PAL.h); // inner shadow
+        rect(ctx, x - 2 * k, top, pw + 4 * k, 6 * k, PAL.q);           // gold capital
+        rect(ctx, x - 2 * k, bot - 6 * k, pw + 4 * k, 6 * k, PAL.G);   // base
+        // a little lamp glowing on each pillar
+        const lx = x + pw / 2, ly = cy - 10 * k;
+        FX.light(ctx, lx, ly, 10 * k, PAL.o, 0.6, 3);
+        rect(ctx, lx - k, ly - 2 * k, Math.max(1, 2 * k), Math.max(1, 3 * k), PAL.y);
+      }
+    }
+  }
+
+  function sceneTemple(ctx, p) {
+    const t = p * 6;
+    drawTempleGrounds(ctx, t);
+
+    // fireworks overhead (behind the text)
+    for (let i = 0; i < ROCKETS7.length; i++) {
+      const [t0, x, yTop, cols, ring] = ROCKETS7[i];
+      FX.firework(ctx, t - t0, { x, yGround: 250, yTop, drift: (hash(i, 8) - 0.5) * 20, rise: 0.7, cols, ring, n: 36, power: 85, seed: 300 + i * 11, life: 1.5 });
+    }
+
+    // camera moving forward: fast at first, easing out as we leave the corridor
+    const camZ = 5.2 * easeOut(seg(t, 0, 1.25));
+    drawCorridor(ctx, t, camZ);
+
+    // --- the title, typed in. The newest letter flashes white for 2 frames.
+    const title = Font.typed(TITLE, t, T_TITLE, PER_TITLE);
+    if (title) {
+      // outlineW 1 (not 2): a thick outline would fill the small holes in
+      // letters like P and A and make "HAPPY" read as "HAFFY"
+      const glow = { glow: PAL.q, glowR: 6, glowA: 0.9, outline: PAL.k, outlineW: 1 };
+      // x is fixed for the FULL title, so letters don't shift as more appear
+      const x0 = W / 2 - Font.measure(TITLE, 5) / 2;
+      Font.draw(ctx, title, x0, 18, PAL.y, 5, glow);
+      // when did the newest letter appear? flash it white for 0.07 s
+      const idx = title.length - 1;
+      if (t - (T_TITLE + idx * PER_TITLE) < 0.07) {
+        const prefix = title.slice(0, idx);
+        const x = x0 + (prefix ? Font.measure(prefix, 5) + 5 : 0); // +5 = one gap at scale 5
+        Font.draw(ctx, title[idx], x, 18, PAL.w, 5);
+      }
+    }
+    const by = Font.typed(BYLINE, t, T_BY, PER_BY);
+    if (by) Font.draw(ctx, by, W / 2 - Font.measure(BYLINE, 2) / 2, 52, PAL.w, 2, { outline: PAL.k, glow: PAL.o, glowR: 3, glowA: 0.6 });
+
+    // little sparkles twinkling around the title once it's complete
+    if (t > T_TITLE + TITLE.length * PER_TITLE) {
+      for (let i = 0; i < 6; i++) {
+        const ph = (t * 1.3 + i / 6) % 1;
+        const x = 120 + hash(i, Math.floor(t * 1.3 + i / 6), 1) * 240;
+        const y = 12 + hash(i, Math.floor(t * 1.3 + i / 6), 2) * 36;
+        const s = Math.round(Math.sin(ph * Math.PI) * 3);
+        if (s > 0) { FX.line(ctx, x - s, y, x + s, y, PAL.w); FX.line(ctx, x, y - s, x, y + s, PAL.w); }
+      }
+    }
+
+    // fade to black at the very end (the last frame is fully black)
+    FX.flash(ctx, ease(seg(t, T_FADE, 6)), '#000000');
+  }
+
+  // ===========================================================================
   // Placeholders for scenes not built yet (replaced one at a time).
   // ===========================================================================
   function placeholder(title, sub, bg, fg) {
@@ -535,8 +709,7 @@
       draw: placeholder('5 AYODHYA', 'THE RETURN HOME', [PAL.D, PAL.n], PAL.y) },
     { name: 'COURT', dur: 4, xfade: 0.2,
       draw: placeholder('6 COURT', 'THE ROYAL TABLEAU', [PAL.m, PAL.r], PAL.q) },
-    { name: 'TEMPLE', dur: 6, xfade: 0.2,
-      draw: placeholder('7 TEMPLE', 'HAPPY DIWALI', [PAL.n, PAL.t], PAL.y) },
+    { name: 'TEMPLE', dur: 6, xfade: 0.2, draw: sceneTemple },
   ];
 
   // ===========================================================================
