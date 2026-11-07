@@ -449,6 +449,7 @@
     if (t < HIT) {
       const ax = lerp(-60, chest.x - 48, t / HIT);
       for (let j = 3; j >= 1; j--) Sprites.draw(ctx, 'arrow', ax - j * 20, chest.y - 7, { s: S, anchor: 'tl', mode: 'w', alpha: 0.3 / j });
+      Sprites.draw(ctx, 'arrow', ax, chest.y - 7, { s: S, anchor: 'tl' });
       FX.emit(ctx, t, {
         x: (b) => lerp(-60, chest.x - 48, b / HIT), y: chest.y, t0: -0.3, t1: HIT, rate: 200, life: 0.4,
         vx: [-200, -60], vy: [-60, 60], g: 120, kind: 'spark', cols: [PAL.w, PAL.y, PAL.q], seed: 81,
@@ -505,7 +506,7 @@
     }
 
     // --- overlays (not shaken): white flash on impact, then the big shake
-    FX.flash(ctx, 1 - seg(t, HIT, HIT + 0.35), PAL.w);
+    if (t >= HIT) FX.flash(ctx, 1 - seg(t, HIT, HIT + 0.35), PAL.w); // only AFTER impact
     FX.flash(ctx, 0.8 * (1 - seg(t, BURST, BURST + 0.25)) * (t >= BURST ? 1 : 0), PAL.y);
     let sh = FX.shake(t, HIT, 0.9, 10, 4);
     if (t >= BURST) { const s2 = FX.shake(t, BURST, 0.8, 8, 5); sh = { x: sh.x + s2.x, y: sh.y + s2.y }; }

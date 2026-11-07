@@ -282,6 +282,7 @@
       a.remove();
       setTimeout(() => URL.revokeObjectURL(url), 10_000);
       status.textContent = `Saved diwali.webm (${(blob.size / 1e6).toFixed(1)} MB). Convert it with ffmpeg — see README.`;
+      if (q.has('autorecord')) console.info(`RECORD OK: ${blob.size} bytes, ${mimeType}`);
     } catch (err) {
       console.warn('Recording failed:', err);
       status.textContent = 'Recording failed: ' + err.message;
@@ -296,8 +297,44 @@
     }
   }
 
+  // ------------------------------------------------------------- self-test
+  // Open index.html?selftest to check the whole video without watching it:
+  //  1. renders all 1110 frames and catches any error,
+  //  2. flags any frame that looks blank (fewer than 3 colours in a sample;
+  //     the very last frame is skipped — it's meant to be black),
+  //  3. proves determinism: frame 500 must be pixel-identical whether we
+  //     arrive at it from frame 0 or from frame 1000.
+  function selfTest() {
+    const t0 = performance.now();
+    const problems = [];
+    // read pixels from a separate canvas flagged for frequent reads, so the
+    // main buffer stays GPU-fast during normal playback
+    const rb = makeBuffer();
+    const rbx = rb.getContext('2d', { willReadFrequently: true });
+    const pixels = () => { rbx.clearRect(0, 0, W, H); rbx.drawImage(buf, 0, 0); return rbx.getImageData(0, 0, W, H).data; };
+    for (let f = 0; f < TOTAL; f++) {
+      try { renderFrame(f); } catch (e) { problems.push(`frame ${f}: ${e.message}`); continue; }
+      if (f === TOTAL - 1) continue;
+      const d = pixels();
+      const seen = new Set();
+      for (let i = 0; i < d.length && seen.size < 3; i += 4 * 97) seen.add((d[i] << 16) | (d[i + 1] << 8) | d[i + 2]);
+      if (seen.size < 3) problems.push(`frame ${f}: looks blank`);
+    }
+    const grab = () => pixels().join(',');
+    renderFrame(0); renderFrame(500); const a = grab();
+    renderFrame(1000); renderFrame(500); const b = grab();
+    if (a !== b) problems.push('frame 500 differs depending on the previous frame (not deterministic)');
+    const ms = Math.round(performance.now() - t0);
+    const msg = problems.length
+      ? 'SELFTEST FAILED: ' + problems.slice(0, 20).join(' | ')
+      : `SELFTEST OK: ${TOTAL} frames rendered in ${ms} ms, none blank, deterministic`;
+    console.info(msg);
+    document.title = msg;
+  }
+
   // ---------------------------------------------------------------- boot
-  // URL options (handy for testing):  ?frame=300   ?scene=3   ?test=1   ?paused=1
+  // URL options (handy for testing):
+  //   ?frame=300  ?scene=3  ?test=1  ?paused=1  ?selftest  ?autorecord
   const q = new URLSearchParams(location.search);
   if (q.has('frame')) seek(+q.get('frame'));
   if (q.has('scene')) seek(timeline[Math.max(0, Math.min(timeline.length - 1, +q.get('scene') - 1))].start);
@@ -308,4 +345,6 @@
   resize();
   state.lastTime = performance.now();
   requestAnimationFrame(tick);
+  if (q.has('selftest')) { state.playing = false; selfTest(); }
+  if (q.has('autorecord')) setTimeout(record, 300);
 })();
