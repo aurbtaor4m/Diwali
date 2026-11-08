@@ -4,7 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Happy Diwali</title>
-  <link rel="stylesheet" href="css/style.css">
+  <!-- "?v=2" = version tag: bump it after editing a file so browsers
+       fetch the new copy instead of an old cached one. -->
+  <link rel="stylesheet" href="css/style.css?v=2">
 </head>
 <body>
   <!-- The visible canvas. Its pixel size is set by main.js (480×270 × k). -->
@@ -18,18 +20,20 @@
       <div id="marks"></div>
     </div>
     <span id="time"></span>
-    <button id="rec" title="Render every frame to diwali.webm">● Record</button>
+    <button id="sound" title="Sound on/off (M)">… sound</button>
+    <button id="rec" title="Render every frame to diwali.webm (silent)">● Record</button>
+    <button id="recsound" title="Render every frame to diwali.webm with sfx.wav as its sound track">● Record + Sound</button>
   </div>
-  <div id="help">SPACE play/pause · R restart · 1–7 scenes · T sprite test · ←/→ step frame</div>
+  <div id="help">SPACE play/pause · R restart · 1–7 scenes · T sprite test · ←/→ step frame · M sound</div>
   <div id="status"></div>
 
   <!-- Plain scripts, loaded in dependency order. No modules, no build step,
        so it works from any static server (python http.server, Live Server). -->
-  <script src="js/palette.js"></script>
-  <script src="js/font.js"></script>
-  <script src="js/fx.js"></script>
-  <script src="js/sprites.js"></script>
-  <script src="js/scenes.js"></script>
-  <script src="js/main.js"></script>
+  <script src="js/palette.js?v=2"></script>
+  <script src="js/font.js?v=2"></script>
+  <script src="js/fx.js?v=2"></script>
+  <script src="js/sprites.js?v=2"></script>
+  <script src="js/scenes.js?v=2"></script>
+  <script src="js/main.js?v=2"></script>
 </body>
 </html>

@@ -43,7 +43,14 @@ Then open <http://127.0.0.1:8000> in Chrome or Edge.
 | `1`–`7` | Jump to a scene |
 | `←` / `→` | Step one frame back / forward |
 | `T` | Sprite test screen (on it, `←` / `→` choose a sprite) |
+| `M` | Sound on / off (same as the sound button) |
 | Scrubber | Drag to any moment; hover the bar to make it fully visible |
+
+**Sound:** if `sfx.wav` exists in the project folder (see section 3½), the
+page plays it in sync with the picture. Browsers only allow sound after you
+interact with the page, so click anywhere or press a key once (the sound
+button says **🔈 click me** until then). If the button says **no sfx.wav**, run
+`node tools/sfx.js` and reload.
 
 > **Changes not showing?** Press **Ctrl+F5** to force-reload. Browsers
 > sometimes keep an old copy of the `.js` files.
@@ -52,11 +59,27 @@ Then open <http://127.0.0.1:8000> in Chrome or Edge.
 
 ## 2. Record the video (WebM)
 
-1. Open the page in **Chrome or Edge** and click **● Record** (bottom right).
+The two record buttons are at the bottom right. Hover the bottom of the window
+if the bar is faded.
+
+- **● Record + Sound**: the video **with** the sound effects from `sfx.wav`
+  (needs `sfx.wav`, see section 3½). This is the easiest way to get a
+  finished video.
+- **● Record**: the video **without** sound (e.g. if you'll add music
+  yourself).
+
+1. Open the page in **Chrome or Edge** and click one of the record buttons.
 2. **Keep the tab visible and in front** for about 38 seconds. The recorder
    paces itself in real time, and browsers slow down timers in background tabs.
+   With **Record + Sound** you'll hear the sound while it records; that's
+   normal (press `M` first if you'd rather it record silently on your speakers).
 3. When it finishes, **`diwali.webm`** downloads automatically. Expect about
-   20–25 MB at 1920×1080. It has no audio.
+   20–25 MB at 1920×1080.
+
+**Recording with sound stays in sync:** each frame is captured at exactly
+*frame ÷ 30* seconds on the **audio** clock, the same clock that plays
+`sfx.wav` into the recording. In a test recording, the impact and explosion
+sounds started within 13 ms of their flashes on screen (one frame is 33 ms).
 
 **What "frame-accurate" means here:** the recorder does not capture whatever
 happens to be on screen. It steps the timeline through frames 0, 1, 2 … 1109
@@ -86,6 +109,9 @@ What each part does:
 - `-pix_fmt yuv420p`: the colour format WhatsApp and iPhones expect.
 - `-movflags +faststart`: puts the index at the start of the file so the video
   starts playing before it has fully downloaded.
+- If you used **Record + Sound**, the sound comes along automatically: ffmpeg
+  converts it to AAC, which every phone plays. You don't need section 3½'s
+  combine step.
 
 ### Check the size: it must be under 16 MB
 
@@ -119,8 +145,11 @@ node tools/sfx.js
 ```
 
 This writes `sfx.wav` (44.1 kHz, 16-bit stereo, peak normalised to −1 dB) in
-the project folder and prints every cue time. Put `sfx.wav` in the same folder
-as `diwali.mp4`, then combine them:
+the project folder and prints every cue time. Reload the page to hear it.
+
+You can now either record **with sound** straight from the page
+(**● Record + Sound**, section 2), or record silently and combine afterwards.
+For the second route, put `sfx.wav` in the same folder as `diwali.mp4`, then:
 
 ```
 ffmpeg -i diwali.mp4 -i sfx.wav -c:v copy -c:a aac -b:a 192k -shortest diwali_sfx.mp4
@@ -214,7 +243,8 @@ frame.
   result appears in the tab title and the console.
 - **Other URL options**: `?scene=3`, `?frame=400` (opens paused there),
   `?test=1` (sprite test screen showing sprite #1), `?autorecord` (starts
-  recording on load).
+  a silent recording on load), `?autorecord=sound` (starts a recording with
+  sound).
 
 ---
 

@@ -51,7 +51,8 @@ canvas {
   cursor: pointer;
 }
 #hud button:hover { background: #566c86; }
-#rec { color: #ff8fb0 !important; white-space: nowrap; }
+#rec, #recsound { color: #ff8fb0 !important; white-space: nowrap; }
+#sound { white-space: nowrap; min-width: 92px; }
 
 #track { position: relative; flex: 1; }
 #scrub { width: 100%; accent-color: #e6a33c; margin: 0; }
