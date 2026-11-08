@@ -108,6 +108,51 @@ compresses very well, so 23 may already fit.
 
 ---
 
+## 3½. Add the sound effects (optional)
+
+The sound effects are made **offline**: a script synthesises a 37-second
+chiptune track, `sfx.wav`, with every sound placed at the exact video time of
+its event. The visuals don't change. The script needs no packages, only Node.
+
+```
+node tools/sfx.js
+```
+
+This writes `sfx.wav` (44.1 kHz, 16-bit stereo, peak normalised to −1 dB) in
+the project folder and prints every cue time. Put `sfx.wav` in the same folder
+as `diwali.mp4`, then combine them:
+
+```
+ffmpeg -i diwali.mp4 -i sfx.wav -c:v copy -c:a aac -b:a 192k -shortest diwali_sfx.mp4
+```
+
+- `-c:v copy` keeps the video exactly as it is (no re-encode, so it's instant
+  and loses no quality).
+- `-c:a aac -b:a 192k` encodes the sound as AAC, which every phone plays.
+- `-shortest` stops at whichever input ends first (both are 37 s).
+
+The sound adds about 0.6 MB, so the result stays well under WhatsApp's 16 MB.
+
+**Tweaking:** every cue is in the **CUE TABLE** near the top of
+`tools/sfx.js`, written as `at(scene, secondsIntoScene)`. `at()` converts a
+scene time to a video time using the same frame maths as `js/main.js`. Each
+line's comment names the `scenes.js` constant it comes from. Volumes are the
+`vol` option, or the defaults in the sound library below the table. Re-run the
+script after any change.
+
+**No `node` command?** Install Node.js LTS (`winget install OpenJS.NodeJS.LTS`,
+then open a new terminal). As a stop-gap, VS Code ships with Node built in. In
+PowerShell:
+
+```
+$env:ELECTRON_RUN_AS_NODE=1; & "C:\Program Files\Microsoft VS Code\Code.exe" tools\sfx.js
+```
+
+(That runs the script but its printed output may not appear. Check that
+`sfx.wav` was updated.)
+
+---
+
 ## 4. Project layout
 
 ```
@@ -119,6 +164,7 @@ js/fx.js          seeded randomness + every effect (particles, fireworks, fire, 
 js/sprites.js     every character and prop as text grids, plus the sprite renderer
 js/scenes.js      one draw function per scene + the sprite test screen
 js/main.js        timeline, playback, keyboard, scrubber, recorder, self-test
+tools/sfx.js      offline sound-effects renderer → sfx.wav (Node, no dependencies)
 reference/        cardiHero (style reference only, ignored by git)
 ramayan_sprites/  the character reference images (visual reference only)
 ```
